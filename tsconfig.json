@@ -1,7 +1,14 @@
 {
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "jsx": "preserve",
-    "jsxImportSource": "solid-js"
+    "jsxImportSource": "solid-js",
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./entrypoints/*"],
+      "@/components/*": ["./components/*"],
+      "@/lib/*": ["./lib/*"]
+    }
   }
 }
