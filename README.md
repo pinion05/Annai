@@ -1,2 +1,2 @@
 # Annai
-Anna - alt native notion ai
+Annai - alt native notion ai
