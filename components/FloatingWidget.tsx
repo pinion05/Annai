@@ -68,14 +68,27 @@ function FloatingWidget(props: WidgetProps) {
   };
 
   const handleKeyPress = (e: KeyboardEvent) => {
+    console.log('[DEBUG] handleKeyPress called:', {
+      key: e.key,
+      isComposing: (e as any).isComposing,
+      isComposingSignal: isComposing(),
+      target: (e.target as HTMLElement).tagName,
+      currentTarget: (e.currentTarget as HTMLElement).tagName
+    });
+
     // 한글 IME 입력 중이면 엔터 키를 무시
     if ((e as any).isComposing || isComposing()) {
+      console.log('[DEBUG] IME composing, ignoring key');
       return;
     }
 
     if (e.key === 'Enter' && !e.shiftKey) {
+      console.log('[DEBUG] Enter key pressed, preventing default');
       e.preventDefault();
       handleSendMessage((e.currentTarget as HTMLInputElement).value);
+    } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace'].includes(e.key)) {
+      console.log('[DEBUG] Navigation key pressed:', e.key, '- stopping propagation to prevent focus loss');
+      e.stopPropagation();
     }
   };
 
@@ -117,6 +130,23 @@ function FloatingWidget(props: WidgetProps) {
 
   createEffect(() => {
     setAnnaiIcon(browser.runtime.getURL('/icon/Annai.png'));
+
+    // Debug: Add global keydown listener to track all key events
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      console.log('[DEBUG] Global keydown:', {
+        key: e.key,
+        target: (e.target as HTMLElement).tagName,
+        className: (e.target as HTMLElement).className,
+        isComposing: (e as any).isComposing,
+        defaultPrevented: e.defaultPrevented
+      });
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown, true); // Use capture phase
+
+    onCleanup(() => {
+      window.removeEventListener('keydown', handleGlobalKeyDown, true);
+    });
   });
 
   return (
@@ -131,7 +161,10 @@ function FloatingWidget(props: WidgetProps) {
         left: `${position().x}px`,
         top: `${position().y}px`,
       } : {}}
-      onMouseDown={handleDragStart}
+      onMouseDown={(e) => {
+        console.log('[DEBUG] Widget onMouseDown, target:', (e.target as HTMLElement).tagName, 'className:', (e.target as HTMLElement).className);
+        handleDragStart(e);
+      }}
     >
       {/* Collapsed FAB */}
       <Show when={!isExpanded()}>
@@ -337,13 +370,24 @@ function FloatingWidget(props: WidgetProps) {
                 <input
                   type="text"
                   value={inputValue()}
-                  onInput={(e) => setInputValue(e.currentTarget.value)}
-                  onCompositionStart={() => setIsComposing(true)}
-                  onCompositionEnd={(e) => {
-                    setIsComposing(false);
+                  onInput={(e) => {
+                    console.log('[DEBUG] onInput called, value:', e.currentTarget.value);
                     setInputValue(e.currentTarget.value);
                   }}
+                  onCompositionStart={() => {
+                    console.log('[DEBUG] onCompositionStart called');
+                    setIsComposing(true);
+                  }}
+                  onCompositionEnd={(e) => {
+                    console.log('[DEBUG] onCompositionEnd called, value:', e.currentTarget.value);
+                    setIsComposing(false);
+                    // Remove setInputValue call to prevent unnecessary re-rendering and focus loss
+                    // The value is already updated by onInput event
+                  }}
                   onKeyDown={handleKeyPress}
+                  onBlur={(e) => {
+                    console.log('[DEBUG] Input lost focus, relatedTarget:', (e.relatedTarget as HTMLElement)?.tagName, 'className:', (e.relatedTarget as HTMLElement)?.className);
+                  }}
                   placeholder="Type a message..."
                   class={cn(
                     'flex-1 px-4 py-2.5 rounded-xl',
