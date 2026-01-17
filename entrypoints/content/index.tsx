@@ -95,16 +95,16 @@ export default defineContentScript({
         .h-full { height: 100% !important; }
         .flex-1 { flex: 1 1 0% !important; }
         .max-w-\\[75\\%\\] { max-width: 75% !important; }
-        .bg-white { background-color: white !important; }
-        .bg-gray-50 { background-color: #f9fafb !important; }
-        .bg-gray-100 { background-color: #f3f4f6 !important; }
-        .bg-gray-300 { background-color: #d1d5db !important; }
-        .bg-gray-600 { background-color: #4b5563 !important; }
-        .bg-gray-700 { background-color: #374151 !important; }
+        .bg-white { background-color: #09090b !important; }
+        .bg-gray-50 { background-color: rgba(17, 24, 39, 0.5) !important; }
+        .bg-gray-100 { background-color: #1f2937 !important; }
+        .bg-gray-300 { background-color: #374151 !important; }
+        .bg-gray-600 { background-color: #374151 !important; }
+        .bg-gray-700 { background-color: #1f2937 !important; }
         .bg-gray-800 { background-color: #1f2937 !important; }
-        .bg-gray-900 { background-color: #111827 !important; }
-        .text-gray-400 { color: #9ca3af !important; }
-        .text-gray-900 { color: #111827 !important; }
+        .bg-gray-900 { background-color: #09090b !important; }
+        .text-gray-400 { color: #6b7280 !important; }
+        .text-gray-900 { color: #f3f4f6 !important; }
         .text-gray-100 { color: #f3f4f6 !important; }
         .text-sm { font-size: 0.875rem !important; }
         .font-semibold { font-weight: 600 !important; }
@@ -132,8 +132,8 @@ export default defineContentScript({
         .bg-white\\/10 { background-color: rgba(255, 255, 255, 0.1) !important; }
         .hover\\:bg-white\\/10:hover { background-color: rgba(255, 255, 255, 0.1) !important; }
         .focus\\:ring-2:focus { box-shadow: 0 0 0 2px #8b5cf6 !important; }
-        .placeholder-gray-400::placeholder { color: #9ca3af !important; }
-        .placeholder-gray-500::placeholder { color: #6b7280 !important; }
+        .placeholder-gray-400::placeholder { color: #6b7280 !important; }
+        .placeholder-gray-500::placeholder { color: #4b5563 !important; }
         /* Only reset input, not button - let Tailwind button styles work */
         input { border: none; outline: none; background: none; }
         .justify-end { justify-content: flex-end !important; }

@@ -13,11 +13,11 @@ const getVariantClasses = (variant: ButtonProps['variant']): string => {
     case 'destructive':
       return 'bg-red-600 text-white hover:bg-red-700';
     case 'outline':
-      return 'border border-gray-300 bg-transparent hover:bg-gray-100 text-gray-700';
+      return 'border border-gray-600 bg-transparent hover:bg-gray-800 text-gray-200';
     case 'ghost':
-      return 'hover:bg-gray-100 text-gray-700';
+      return 'hover:bg-gray-800 text-gray-200';
     case 'link':
-      return 'underline-offset-4 hover:underline text-violet-600';
+      return 'underline-offset-4 hover:underline text-violet-400';
     case 'gradient':
       return 'bg-gradient-to-br from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700';
     default:
@@ -47,7 +47,7 @@ export const Button = <T extends ValidComponent = 'button'>(props: PolymorphicPr
   return (
     <ButtonPrimitive
       class={cn(
-        'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+        'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-50 disabled:pointer-events-none',
         getVariantClasses(variant),
         getSizeClasses(size),
         local.class

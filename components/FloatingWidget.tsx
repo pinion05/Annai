@@ -150,8 +150,8 @@ function FloatingWidget(props: WidgetProps) {
         <div
           class={cn(
             'w-full h-full rounded-2xl',
-            'bg-white dark:bg-gray-900',
-            'border border-gray-200 dark:border-gray-700',
+            'bg-zinc-950',
+            'border border-gray-800',
             'flex flex-col overflow-hidden',
             'transition-all duration-300 ease-out',
             'shadow-2xl'
@@ -240,11 +240,11 @@ function FloatingWidget(props: WidgetProps) {
 
           {/* Messages Area */}
           <Show when={!isMinimized()}>
-            <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-800/50">
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900/50">
               <Show
                 when={messages().length > 0}
                 fallback={
-                  <div class="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
+                  <div class="flex flex-col items-center justify-center h-full text-gray-500">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       class="h-12 w-12 mb-2"
@@ -295,7 +295,7 @@ function FloatingWidget(props: WidgetProps) {
                           'max-w-[75%] px-4 py-2 rounded-2xl',
                           message.role === 'user'
                             ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
-                            : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600'
+                            : 'bg-gray-800 text-gray-100 border border-gray-700'
                         )}
                       >
                         <p class="text-sm whitespace-pre-wrap break-words">
@@ -304,10 +304,10 @@ function FloatingWidget(props: WidgetProps) {
                       </div>
 
                       <Show when={message.role === 'user'}>
-                        <div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+                        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4 text-gray-600 dark:text-gray-300"
+                            class="h-4 w-4 text-gray-300"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -328,7 +328,7 @@ function FloatingWidget(props: WidgetProps) {
             </div>
 
             {/* Input Area */}
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div class="p-4 border-t border-gray-800 bg-zinc-950">
               <div class="flex gap-2">
                 <input
                   type="text"
@@ -338,11 +338,11 @@ function FloatingWidget(props: WidgetProps) {
                   placeholder="Type a message..."
                   class={cn(
                     'flex-1 px-4 py-2.5 rounded-xl',
-                    'bg-gray-100 dark:bg-gray-800',
-                    'border border-gray-200 dark:border-gray-700',
+                    'bg-gray-800',
+                    'border border-gray-700',
                     'focus:outline-none focus:ring-2 focus:ring-violet-500',
-                    'text-gray-900 dark:text-gray-100',
-                    'placeholder-gray-400 dark:placeholder-gray-500',
+                    'text-gray-100',
+                    'placeholder-gray-500',
                     'transition-all duration-200'
                   )}
                 />
