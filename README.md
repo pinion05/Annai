@@ -1,2 +1,2 @@
-# Anna
+# Annai
 Anna - alt native notion ai
