@@ -107,9 +107,9 @@ function FloatingWidget(props: WidgetProps) {
         'fixed z-[9999] shadow-2xl',
         isExpanded() ? 'w-96 h-[600px]' : 'w-14 h-14',
         isDragging() && 'cursor-grabbing',
-        getPositionClasses()
+        isExpanded() ? '' : 'bottom-4 right-4'
       )}
-      style={position().x !== 0 || position().y !== 0 ? {
+      style={isExpanded() && (position().x !== 0 || position().y !== 0) ? {
         left: `${position().x}px`,
         top: `${position().y}px`,
       } : {}}
@@ -118,7 +118,17 @@ function FloatingWidget(props: WidgetProps) {
       {/* Collapsed FAB */}
       <Show when={!isExpanded()}>
         <Button
-          onClick={() => setIsExpanded(true)}
+          onClick={() => {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const widgetWidth = 384; // w-96 = 24rem = 384px
+            const widgetHeight = 600; // h-[600px]
+            setPosition({
+              x: windowWidth - widgetWidth - 16, // 16 = 4rem = 16px padding
+              y: windowHeight - widgetHeight - 16
+            });
+            setIsExpanded(true);
+          }}
           variant="gradient"
           size="icon"
           class={cn(
@@ -162,16 +172,16 @@ function FloatingWidget(props: WidgetProps) {
             class={cn(
               'drag-handle flex items-center justify-between',
               'px-4 py-3',
-              'bg-gradient-to-r from-violet-500 to-purple-600',
-              'text-white cursor-grab',
+              'bg-gray-900 border-b border-gray-800',
+              'text-gray-100 cursor-grab',
               'select-none'
             )}
           >
             <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+              <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5"
+                  class="h-5 w-5 text-gray-300"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -184,7 +194,7 @@ function FloatingWidget(props: WidgetProps) {
                   />
                 </svg>
               </div>
-              <span class="font-semibold">Annai</span>
+              <span class="font-semibold text-gray-100">Annai</span>
             </div>
 
             <div class="flex items-center gap-1">
@@ -193,7 +203,7 @@ function FloatingWidget(props: WidgetProps) {
                 onClick={() => setIsMinimized(!isMinimized())}
                 variant="ghost"
                 size="icon"
-                class="text-white hover:bg-white/10 data-[hover]:bg-white/10"
+                class="h-8 w-8 text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -218,7 +228,7 @@ function FloatingWidget(props: WidgetProps) {
                 onClick={() => setIsExpanded(false)}
                 variant="ghost"
                 size="icon"
-                class="text-white hover:bg-white/10 data-[hover]:bg-white/10"
+                class="h-8 w-8 text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -272,10 +282,10 @@ function FloatingWidget(props: WidgetProps) {
                       )}
                     >
                       <Show when={message.role !== 'user'}>
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4 text-white"
+                            class="h-4 w-4 text-gray-300"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -294,7 +304,7 @@ function FloatingWidget(props: WidgetProps) {
                         class={cn(
                           'max-w-[75%] px-4 py-2 rounded-2xl',
                           message.role === 'user'
-                            ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
+                            ? 'bg-gray-700 text-gray-100'
                             : 'bg-gray-800 text-gray-100 border border-gray-700'
                         )}
                       >
@@ -340,7 +350,7 @@ function FloatingWidget(props: WidgetProps) {
                     'flex-1 px-4 py-2.5 rounded-xl',
                     'bg-gray-800',
                     'border border-gray-700',
-                    'focus:outline-none focus:ring-2 focus:ring-violet-500',
+                    'focus:outline-none focus:ring-2 focus:ring-gray-600',
                     'text-gray-100',
                     'placeholder-gray-500',
                     'transition-all duration-200'
@@ -349,7 +359,7 @@ function FloatingWidget(props: WidgetProps) {
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue().trim()}
-                  variant="gradient"
+                  variant="default"
                   class="px-4 py-2.5 rounded-xl"
                 >
                   <svg

@@ -26,7 +26,7 @@
 }
 
 .card button {
-  background: linear-gradient(to bottom right, #8b5cf6, #9333ea);
+  background: #374151;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -38,7 +38,7 @@
 }
 
 .card button:hover {
-  background: linear-gradient(to bottom right, #7c3aed, #6b21a8);
+  background: #4b5563;
 }
 
 .read-the-docs {

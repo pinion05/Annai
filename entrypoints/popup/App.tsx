@@ -22,7 +22,7 @@ function App() {
           count is {count()}
         </button>
         <p class="text-gray-300">
-          Edit <code class="text-violet-400">popup/App.tsx</code> and save to test HMR
+          Edit <code class="text-gray-400">popup/App.tsx</code> and save to test HMR
         </p>
       </div>
       <p class="read-the-docs">

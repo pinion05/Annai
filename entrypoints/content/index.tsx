@@ -52,13 +52,6 @@ export default defineContentScript({
         .rounded-2xl { border-radius: 1rem !important; }
         .rounded-xl { border-radius: 0.75rem !important; }
         .rounded-lg { border-radius: 0.5rem !important; }
-        .bg-gradient-to-br { background: linear-gradient(to bottom right, var(--tw-gradient-stops)) !important; }
-        .from-violet-500 { --tw-gradient-from: #8b5cf6; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgb(139 92 246 / 0)); }
-        .to-purple-600 { --tw-gradient-to: #9333ea; }
-        .from-violet-600 { --tw-gradient-from: #7c3aed; }
-        .to-purple-700 { --tw-gradient-to: #6b21a8; }
-        .hover\\:from-violet-600:hover { --tw-gradient-from: #7c3aed; }
-        .hover\\:to-purple-700:hover { --tw-gradient-to: #6b21a8; }
         .hover\\:scale-110:hover { transform: scale(1.1); }
         .active\\:scale-95:active { transform: scale(0.95); }
         .text-white { color: white !important; }
@@ -131,7 +124,7 @@ export default defineContentScript({
         .bg-white\\/20 { background-color: rgba(255, 255, 255, 0.2) !important; }
         .bg-white\\/10 { background-color: rgba(255, 255, 255, 0.1) !important; }
         .hover\\:bg-white\\/10:hover { background-color: rgba(255, 255, 255, 0.1) !important; }
-        .focus\\:ring-2:focus { box-shadow: 0 0 0 2px #8b5cf6 !important; }
+        .focus\\:ring-2:focus { box-shadow: 0 0 0 2px #4b5563 !important; }
         .placeholder-gray-400::placeholder { color: #6b7280 !important; }
         .placeholder-gray-500::placeholder { color: #4b5563 !important; }
         /* Only reset input, not button - let Tailwind button styles work */
