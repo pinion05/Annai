@@ -135,19 +135,23 @@ function FloatingWidget(props: WidgetProps) {
             });
             setIsExpanded(true);
           }}
-          variant="gradient"
+          variant="ghost"
           size="icon"
           class={cn(
-            'w-full h-full rounded-full',
-            'hover:scale-110 active:scale-95',
-            'shadow-lg',
+            'w-full h-full',
+            'bg-transparent',
+            'shadow-none',
+            'p-0',
+            'hover:bg-transparent active:bg-transparent',
+            'hover:scale-110',
             'transition-all duration-300 ease-out'
           )}
+          style="background: transparent; box-shadow: none; padding: 0; border: none;"
         >
           <img
             src={annaiIcon()}
             alt="Annai"
-            class="h-8 w-8 object-contain"
+            class="h-full w-full object-contain"
           />
         </Button>
       </Show>
