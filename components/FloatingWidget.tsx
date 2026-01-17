@@ -14,7 +14,7 @@ interface Message {
 }
 
 function FloatingWidget(props: WidgetProps) {
-  const [isExpanded, setIsExpanded] = createSignal(props.initialState !== 'collapsed');
+  const [isExpanded, setIsExpanded] = createSignal(props.initialState === 'expanded');
   const [isMinimized, setIsMinimized] = createSignal(false);
   const [messages, setMessages] = createSignal<Message[]>([]);
   const [inputValue, setInputValue] = createSignal('');
@@ -106,7 +106,7 @@ function FloatingWidget(props: WidgetProps) {
         'fixed z-[9999] shadow-2xl',
         isExpanded() ? 'w-96 h-[600px]' : 'w-14 h-14',
         isDragging() && 'cursor-grabbing',
-        isExpanded() && getPositionClasses()
+        getPositionClasses()
       )}
       style={position().x !== 0 || position().y !== 0 ? {
         left: `${position().x}px`,
