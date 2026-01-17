@@ -26,6 +26,7 @@ function FloatingWidget(props: WidgetProps) {
   const [position, setPosition] = createSignal({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = createSignal({ x: 0, y: 0 });
   const [annaiIcon, setAnnaiIcon] = createSignal('');
+  const [isComposing, setIsComposing] = createSignal(false);
 
   const getPositionClasses = () => {
     const pos = props.position || 'bottom-right';
@@ -66,6 +67,11 @@ function FloatingWidget(props: WidgetProps) {
   };
 
   const handleKeyPress = (e: KeyboardEvent) => {
+    // 한글 IME 입력 중이면 엔터 키를 무시
+    if ((e as any).isComposing || isComposing()) {
+      return;
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage((e.currentTarget as HTMLInputElement).value);
@@ -350,6 +356,11 @@ function FloatingWidget(props: WidgetProps) {
                   type="text"
                   value={inputValue()}
                   onInput={(e) => setInputValue(e.currentTarget.value)}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={(e) => {
+                    setIsComposing(false);
+                    setInputValue(e.currentTarget.value);
+                  }}
                   onKeyDown={handleKeyPress}
                   placeholder="Type a message..."
                   class={cn(
