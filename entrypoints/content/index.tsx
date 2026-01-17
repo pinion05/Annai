@@ -134,7 +134,7 @@ export default defineContentScript({
         .focus\\:ring-2:focus { box-shadow: 0 0 0 2px #8b5cf6 !important; }
         .placeholder-gray-400::placeholder { color: #9ca3af !important; }
         .placeholder-gray-500::placeholder { color: #6b7280 !important; }
-        button { border: none; background: none; padding: 0; }
+        /* Only reset input, not button - let Tailwind button styles work */
         input { border: none; outline: none; background: none; }
         .justify-end { justify-content: flex-end !important; }
         .bottom-4 { bottom: 1rem !important; }

@@ -1,5 +1,6 @@
 import { createSignal, Show, For, createEffect } from 'solid-js';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface WidgetProps {
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
@@ -116,17 +117,15 @@ function FloatingWidget(props: WidgetProps) {
     >
       {/* Collapsed FAB */}
       <Show when={!isExpanded()}>
-        <button
+        <Button
           onClick={() => setIsExpanded(true)}
+          variant="gradient"
+          size="icon"
           class={cn(
             'w-full h-full rounded-full',
-            'bg-gradient-to-br from-violet-500 to-purple-600',
-            'hover:from-violet-600 hover:to-purple-700',
-            'text-white shadow-lg',
-            'transition-all duration-300 ease-out',
             'hover:scale-110 active:scale-95',
-            'flex items-center justify-center',
-            'cursor-pointer'
+            'shadow-lg',
+            'transition-all duration-300 ease-out'
           )}
         >
           <svg
@@ -143,7 +142,7 @@ function FloatingWidget(props: WidgetProps) {
               d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
             />
           </svg>
-        </button>
+        </Button>
       </Show>
 
       {/* Expanded Widget */}
@@ -185,19 +184,16 @@ function FloatingWidget(props: WidgetProps) {
                   />
                 </svg>
               </div>
-              <span class="font-semibold">AI Assistant</span>
+              <span class="font-semibold">Annai</span>
             </div>
 
             <div class="flex items-center gap-1">
               {/* Minimize Button */}
-              <button
+              <Button
                 onClick={() => setIsMinimized(!isMinimized())}
-                class={cn(
-                  'p-1.5 rounded-lg',
-                  'hover:bg-white/10',
-                  'transition-colors duration-150',
-                  'cursor-pointer'
-                )}
+                variant="ghost"
+                size="icon"
+                class="text-white hover:bg-white/10 data-[hover]:bg-white/10"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -215,17 +211,14 @@ function FloatingWidget(props: WidgetProps) {
                       : 'M5 15l7-7 7 7'}
                   />
                 </svg>
-              </button>
+              </Button>
 
               {/* Close Button */}
-              <button
+              <Button
                 onClick={() => setIsExpanded(false)}
-                class={cn(
-                  'p-1.5 rounded-lg',
-                  'hover:bg-white/10',
-                  'transition-colors duration-150',
-                  'cursor-pointer'
-                )}
+                variant="ghost"
+                size="icon"
+                class="text-white hover:bg-white/10 data-[hover]:bg-white/10"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -241,7 +234,7 @@ function FloatingWidget(props: WidgetProps) {
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -353,19 +346,11 @@ function FloatingWidget(props: WidgetProps) {
                     'transition-all duration-200'
                   )}
                 />
-                <button
+                <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue().trim()}
-                  class={cn(
-                    'px-4 py-2.5 rounded-xl',
-                    'bg-gradient-to-br from-violet-500 to-purple-600',
-                    'hover:from-violet-600 hover:to-purple-700',
-                    'disabled:opacity-50 disabled:cursor-not-allowed',
-                    'text-white font-medium',
-                    'transition-all duration-200',
-                    'flex items-center justify-center',
-                    'cursor-pointer'
-                  )}
+                  variant="gradient"
+                  class="px-4 py-2.5 rounded-xl"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -381,7 +366,7 @@ function FloatingWidget(props: WidgetProps) {
                       d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
                     />
                   </svg>
-                </button>
+                </Button>
               </div>
             </div>
           </Show>
