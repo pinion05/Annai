@@ -27,6 +27,7 @@ function FloatingWidget(props: WidgetProps) {
   const [dragOffset, setDragOffset] = createSignal({ x: 0, y: 0 });
   const [annaiIcon, setAnnaiIcon] = createSignal('');
   const [isComposing, setIsComposing] = createSignal(false);
+  const [isExiting, setIsExiting] = createSignal(false);
 
   const getPositionClasses = () => {
     const pos = props.position || 'bottom-right';
@@ -168,16 +169,19 @@ function FloatingWidget(props: WidgetProps) {
       </Show>
 
       {/* Expanded Widget */}
-      <Show when={isExpanded()}>
+      <Show when={isExpanded() || isExiting()}>
         <div
           class={cn(
             'w-full h-full rounded-2xl',
             'bg-zinc-950',
             'border border-gray-800',
             'flex flex-col overflow-hidden',
-            'transition-all duration-300 ease-out',
             'shadow-2xl'
           )}
+          style={`
+            animation: ${isExiting() ? 'macosSpringExit' : 'macosSpringEnter'} 400ms cubic-bezier(0.34, 1.25, 0.64, 1) forwards;
+            transform-origin: bottom right;
+          `}
         >
           {/* Header */}
           <div
@@ -209,54 +213,32 @@ function FloatingWidget(props: WidgetProps) {
               <span class="font-semibold text-gray-100">Annai</span>
             </div>
 
-            <div class="flex items-center gap-1">
-              {/* Minimize Button */}
-              <Button
+            <div class="flex items-center gap-2">
+              {/* Minimize Button - macOS style yellow button */}
+              <button
                 onClick={() => setIsMinimized(!isMinimized())}
-                variant="ghost"
-                size="icon"
-                class="h-8 w-8 text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors"
+                class="group relative w-4 h-4 rounded-full bg-[#FEBC2E] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d={isMinimized()
-                      ? 'M19 9l-7 7-7-7'
-                      : 'M5 15l7-7 7 7'}
-                  />
-                </svg>
-              </Button>
+                <span class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-800 font-bold leading-none transition-opacity duration-200">
+                  -
+                </span>
+              </button>
 
-              {/* Close Button */}
-              <Button
-                onClick={() => setIsExpanded(false)}
-                variant="ghost"
-                size="icon"
-                class="h-8 w-8 text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors"
+              {/* Close Button - macOS style red button */}
+              <button
+                onClick={() => {
+                  setIsExiting(true);
+                  setTimeout(() => {
+                    setIsExpanded(false);
+                    setIsExiting(false);
+                  }, 400);
+                }}
+                class="group relative w-4 h-4 rounded-full bg-[#FF5F57] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </Button>
+                <span class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-800 font-bold leading-none transition-opacity duration-200">
+                  ×
+                </span>
+              </button>
             </div>
           </div>
 

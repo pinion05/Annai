@@ -137,11 +137,78 @@ export default defineContentScript({
         .focus\\:ring-2:focus { box-shadow: 0 0 0 2px #4b5563 !important; }
         .placeholder-gray-400::placeholder { color: #6b7280 !important; }
         .placeholder-gray-500::placeholder { color: #4b5563 !important; }
+        .bg-\\[#FEBC2E\\] { background-color: #FEBC2E !important; }
+        .bg-\\[#FF5F57\\] { background-color: #FF5F57 !important; }
+        .shadow-md { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important; }
+        .hover\\:shadow-lg:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important; }
+        .group:hover .group-hover\\:opacity-100 { opacity: 1 !important; }
+        .opacity-0 { opacity: 0 !important; }
+        .opacity-100 { opacity: 1 !important; }
         /* Only reset input, not button - let Tailwind button styles work */
         input { border: none; outline: none; background: none; }
         .justify-end { justify-content: flex-end !important; }
         .bottom-4 { bottom: 1rem !important; }
         .right-4 { right: 1rem !important; }
+
+        /* macOS style spring animation - softer version */
+        @keyframes macosSpringEnter {
+          0% {
+            opacity: 0;
+            transform: scale(0.85) translateY(20px);
+          }
+          25% {
+            opacity: 0.8;
+            transform: scale(1.05) translateY(-5px);
+          }
+          40% {
+            opacity: 1;
+            transform: scale(1.01) translateY(-2px);
+          }
+          55% {
+            transform: scale(0.99) translateY(1.5px);
+          }
+          70% {
+            transform: scale(1.005) translateY(-1px);
+          }
+          82% {
+            transform: scale(0.998) translateY(0.5px);
+          }
+          92% {
+            transform: scale(1.002) translateY(-0.25px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        /* Smooth ease-out exit animation - calm and gentle */
+        @keyframes macosSpringExit {
+          0% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+          20% {
+            opacity: 0.8;
+            transform: scale(0.98) translateY(5px);
+          }
+          40% {
+            opacity: 0.6;
+            transform: scale(0.96) translateY(10px);
+          }
+          60% {
+            opacity: 0.4;
+            transform: scale(0.94) translateY(15px);
+          }
+          80% {
+            opacity: 0.2;
+            transform: scale(0.92) translateY(18px);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+          }
+        }
       `;
       document.head.appendChild(style);
     }
