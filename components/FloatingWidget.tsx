@@ -308,7 +308,7 @@ function FloatingWidget(props: WidgetProps) {
 
                       <div
                         class={cn(
-                          'max-w-[75%] px-4 py-2 rounded-2xl',
+                          'max-w-[75%] px-4 py-0 rounded-2xl',
                           message.role === 'user'
                             ? 'bg-gray-700 text-gray-100'
                             : 'bg-gray-800 text-gray-100 border border-gray-700'
