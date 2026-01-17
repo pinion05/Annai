@@ -345,7 +345,7 @@ function FloatingWidget(props: WidgetProps) {
                   type="text"
                   value={inputValue()}
                   onInput={(e) => setInputValue(e.currentTarget.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyPress}
                   placeholder="Type a message..."
                   class={cn(
                     'flex-1 px-4 py-2.5 rounded-xl',
