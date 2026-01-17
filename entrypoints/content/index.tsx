@@ -1,3 +1,5 @@
+// Import setup to fix MaxListenersExceededWarning
+import '../../lib/content-setup';
 import { render } from 'solid-js/web';
 import FloatingWidget from '@/components/FloatingWidget';
 
@@ -10,11 +12,18 @@ export default defineContentScript({
   main() {
     // Prevent duplicate initialization
     if (document.getElementById(WIDGET_CONTAINER_ID)) {
-      console.log('Annai widget already initialized, skipping...');
+      console.log('[DEBUG] Annai widget already initialized, skipping...');
       return;
     }
 
-    console.log('Annai floating widget initializing...');
+    console.log('[DEBUG] Annai floating widget initializing...');
+    console.log('[DEBUG] Checking for readline Interface listeners...');
+    
+    // Debug: Check if there are any readline interfaces
+    if (typeof process !== 'undefined' && process.stdin) {
+      console.log('[DEBUG] process.stdin exists:', !!process.stdin);
+      console.log('[DEBUG] process.stdin.listenerCount("line"):', process.stdin.listenerCount?.('line') || 'N/A');
+    }
 
     // Create container for the widget
     const container = document.createElement('div');

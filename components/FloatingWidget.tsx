@@ -1,4 +1,4 @@
-import { createSignal, Show, For, createEffect } from 'solid-js';
+import { createSignal, Show, For, createEffect, onCleanup } from 'solid-js';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { browser } from 'wxt/browser';
@@ -16,6 +16,8 @@ interface Message {
 }
 
 function FloatingWidget(props: WidgetProps) {
+  console.log('[DEBUG] FloatingWidget component initializing...');
+  
   const [isExpanded, setIsExpanded] = createSignal(props.initialState === 'expanded');
   const [isMinimized, setIsMinimized] = createSignal(false);
   const [messages, setMessages] = createSignal<Message[]>([]);
@@ -50,7 +52,7 @@ function FloatingWidget(props: WidgetProps) {
     setMessages((prev) => [...prev, newMessage]);
     setInputValue('');
 
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       const aiResponse: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
@@ -59,6 +61,8 @@ function FloatingWidget(props: WidgetProps) {
       };
       setMessages((prev) => [...prev, aiResponse]);
     }, 500);
+
+    onCleanup(() => clearTimeout(timeoutId));
   };
 
   const handleKeyPress = (e: KeyboardEvent) => {
@@ -94,9 +98,11 @@ function FloatingWidget(props: WidgetProps) {
 
   createEffect(() => {
     if (isDragging()) {
+      console.log('[DEBUG] Adding drag event listeners...');
       window.addEventListener('mousemove', handleDragMove);
       window.addEventListener('mouseup', handleDragEnd);
     } else {
+      console.log('[DEBUG] Removing drag event listeners...');
       window.removeEventListener('mousemove', handleDragMove);
       window.removeEventListener('mouseup', handleDragEnd);
     }
@@ -112,7 +118,7 @@ function FloatingWidget(props: WidgetProps) {
         'fixed z-[9999] shadow-2xl',
         isExpanded() ? 'w-96 h-[600px]' : 'w-14 h-14',
         isDragging() && 'cursor-grabbing',
-        isExpanded() ? '' : 'bottom-4 right-4'
+        isExpanded() ? '' : getPositionClasses()
       )}
       style={isExpanded() && (position().x !== 0 || position().y !== 0) ? {
         left: `${position().x}px`,
@@ -357,7 +363,10 @@ function FloatingWidget(props: WidgetProps) {
                   )}
                 />
                 <Button
-                  onClick={handleSendMessage}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }}
                   disabled={!inputValue().trim()}
                   variant="default"
                   class="px-4 py-2.5 rounded-xl"
