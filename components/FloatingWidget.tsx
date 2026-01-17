@@ -1,7 +1,7 @@
 import { createSignal, Show, For, createEffect } from 'solid-js';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import annaiIcon from '/icon/Annai.png';
+import { browser } from 'wxt/browser';
 
 interface WidgetProps {
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
@@ -23,6 +23,7 @@ function FloatingWidget(props: WidgetProps) {
   const [isDragging, setIsDragging] = createSignal(false);
   const [position, setPosition] = createSignal({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = createSignal({ x: 0, y: 0 });
+  const [annaiIcon, setAnnaiIcon] = createSignal('');
 
   const getPositionClasses = () => {
     const pos = props.position || 'bottom-right';
@@ -102,6 +103,10 @@ function FloatingWidget(props: WidgetProps) {
     }
   });
 
+  createEffect(() => {
+    setAnnaiIcon(browser.runtime.getURL('/icon/Annai.png'));
+  });
+
   return (
     <div
       class={cn(
@@ -140,7 +145,7 @@ function FloatingWidget(props: WidgetProps) {
           )}
         >
           <img
-            src={annaiIcon}
+            src={annaiIcon()}
             alt="Annai"
             class="h-8 w-8 object-contain"
           />
