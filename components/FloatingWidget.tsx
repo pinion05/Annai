@@ -36,8 +36,8 @@ function FloatingWidget(props: WidgetProps) {
     return classes[pos];
   };
 
-  const handleSendMessage = () => {
-    const content = inputValue().trim();
+  const handleSendMessage = (contentOverride?: string) => {
+    const content = contentOverride?.trim() ?? inputValue().trim();
     if (!content) return;
 
     const newMessage: Message = {
@@ -50,7 +50,6 @@ function FloatingWidget(props: WidgetProps) {
     setMessages((prev) => [...prev, newMessage]);
     setInputValue('');
 
-    // Simulate AI response
     setTimeout(() => {
       const aiResponse: Message = {
         id: crypto.randomUUID(),
@@ -65,7 +64,7 @@ function FloatingWidget(props: WidgetProps) {
   const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      handleSendMessage((e.currentTarget as HTMLInputElement).value);
     }
   };
 
