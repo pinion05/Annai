@@ -96,6 +96,7 @@ export default defineContentScript({
         .bg-gray-700 { background-color: #1f2937 !important; }
         .bg-gray-800 { background-color: #1f2937 !important; }
         .bg-gray-900 { background-color: #09090b !important; }
+        .bg-zinc-950 { background-color: #09090b !important; }
         .text-gray-400 { color: #6b7280 !important; }
         .text-gray-900 { color: #f3f4f6 !important; }
         .text-gray-100 { color: #f3f4f6 !important; }
