@@ -15,11 +15,17 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^2.0.13",
     "@kobalte/core": "^0.13.11",
+    "@notionhq/client": "^5.7.0",
+    "@openrouter/ai-sdk-provider": "^1.5.4",
+    "ai": "^6",
     "clsx": "^2.1.1",
     "corvu": "^0.7.2",
+    "dexie": "^4.2.1",
     "solid-js": "^1.9.10",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/bun": "latest",
