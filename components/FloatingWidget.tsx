@@ -250,7 +250,7 @@ function FloatingWidget(props: WidgetProps) {
               {/* Minimize Button - macOS style yellow button */}
               <button
                 onClick={() => setIsMinimized(!isMinimized())}
-                class="group relative w-4 h-4 rounded-full bg-[#FEBC2E] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center"
+                class="group relative w-4 h-4 rounded-full bg-yellow-500 hover:bg-yellow-400 transition-all duration-200 flex items-center justify-center cursor-pointer outline-none focus:outline-none"
               >
                 <span class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-800 font-bold leading-none transition-opacity duration-200">
                   -
@@ -266,7 +266,7 @@ function FloatingWidget(props: WidgetProps) {
                     setIsExiting(false);
                   }, 400);
                 }}
-                class="group relative w-4 h-4 rounded-full bg-[#FF5F57] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center"
+                class="group relative w-4 h-4 rounded-full bg-red-500 hover:bg-red-400 transition-all duration-200 flex items-center justify-center cursor-pointer outline-none focus:outline-none"
               >
                 <span class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-800 font-bold leading-none transition-opacity duration-200">
                   ×

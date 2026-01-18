@@ -137,8 +137,8 @@ export default defineContentScript({
         .focus\\:ring-2:focus { box-shadow: 0 0 0 2px #4b5563 !important; }
         .placeholder-gray-400::placeholder { color: #6b7280 !important; }
         .placeholder-gray-500::placeholder { color: #4b5563 !important; }
-        .bg-\\[#FEBC2E\\] { background-color: #FEBC2E !important; }
-        .bg-\\[#FF5F57\\] { background-color: #FF5F57 !important; }
+        .bg-yellow-500 { background-color: #eab308 !important; }
+        .bg-red-500 { background-color: #ef4444 !important; }
         .shadow-md { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important; }
         .hover\\:shadow-lg:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important; }
         .group:hover .group-hover\\:opacity-100 { opacity: 1 !important; }
