@@ -1,5 +1,7 @@
-import { createSignal, Show, For, createEffect } from 'solid-js';
+import { createSignal, Show, For, createEffect, onCleanup } from 'solid-js';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { browser } from 'wxt/browser';
 
 interface WidgetProps {
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
@@ -14,13 +16,18 @@ interface Message {
 }
 
 function FloatingWidget(props: WidgetProps) {
-  const [isExpanded, setIsExpanded] = createSignal(props.initialState !== 'collapsed');
+  console.log('[DEBUG] FloatingWidget component initializing...');
+  
+  const [isExpanded, setIsExpanded] = createSignal(props.initialState === 'expanded');
   const [isMinimized, setIsMinimized] = createSignal(false);
   const [messages, setMessages] = createSignal<Message[]>([]);
   const [inputValue, setInputValue] = createSignal('');
   const [isDragging, setIsDragging] = createSignal(false);
   const [position, setPosition] = createSignal({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = createSignal({ x: 0, y: 0 });
+  const [annaiIcon, setAnnaiIcon] = createSignal('');
+  const [isComposing, setIsComposing] = createSignal(false);
+  const [isExiting, setIsExiting] = createSignal(false);
 
   const getPositionClasses = () => {
     const pos = props.position || 'bottom-right';
@@ -33,8 +40,8 @@ function FloatingWidget(props: WidgetProps) {
     return classes[pos];
   };
 
-  const handleSendMessage = () => {
-    const content = inputValue().trim();
+  const handleSendMessage = (contentOverride?: string) => {
+    const content = contentOverride?.trim() ?? inputValue().trim();
     if (!content) return;
 
     const newMessage: Message = {
@@ -47,8 +54,7 @@ function FloatingWidget(props: WidgetProps) {
     setMessages((prev) => [...prev, newMessage]);
     setInputValue('');
 
-    // Simulate AI response
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       const aiResponse: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
@@ -57,12 +63,32 @@ function FloatingWidget(props: WidgetProps) {
       };
       setMessages((prev) => [...prev, aiResponse]);
     }, 500);
+
+    onCleanup(() => clearTimeout(timeoutId));
   };
 
   const handleKeyPress = (e: KeyboardEvent) => {
+    console.log('[DEBUG] handleKeyPress called:', {
+      key: e.key,
+      isComposing: (e as any).isComposing,
+      isComposingSignal: isComposing(),
+      target: (e.target as HTMLElement).tagName,
+      currentTarget: (e.currentTarget as HTMLElement).tagName
+    });
+
+    // 한글 IME 입력 중이면 엔터 키를 무시
+    if ((e as any).isComposing || isComposing()) {
+      console.log('[DEBUG] IME composing, ignoring key');
+      return;
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
+      console.log('[DEBUG] Enter key pressed, preventing default');
       e.preventDefault();
-      handleSendMessage();
+      handleSendMessage((e.currentTarget as HTMLInputElement).value);
+    } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace'].includes(e.key)) {
+      console.log('[DEBUG] Navigation key pressed:', e.key, '- stopping propagation to prevent focus loss');
+      e.stopPropagation();
     }
   };
 
@@ -92,12 +118,35 @@ function FloatingWidget(props: WidgetProps) {
 
   createEffect(() => {
     if (isDragging()) {
+      console.log('[DEBUG] Adding drag event listeners...');
       window.addEventListener('mousemove', handleDragMove);
       window.addEventListener('mouseup', handleDragEnd);
     } else {
+      console.log('[DEBUG] Removing drag event listeners...');
       window.removeEventListener('mousemove', handleDragMove);
       window.removeEventListener('mouseup', handleDragEnd);
     }
+  });
+
+  createEffect(() => {
+    setAnnaiIcon(browser.runtime.getURL('/icon/Annai.png'));
+
+    // Debug: Add global keydown listener to track all key events
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      console.log('[DEBUG] Global keydown:', {
+        key: e.key,
+        target: (e.target as HTMLElement).tagName,
+        className: (e.target as HTMLElement).className,
+        isComposing: (e as any).isComposing,
+        defaultPrevented: e.defaultPrevented
+      });
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown, true); // Use capture phase
+
+    onCleanup(() => {
+      window.removeEventListener('keydown', handleGlobalKeyDown, true);
+    });
   });
 
   return (
@@ -106,73 +155,82 @@ function FloatingWidget(props: WidgetProps) {
         'fixed z-[9999] shadow-2xl',
         isExpanded() ? 'w-96 h-[600px]' : 'w-14 h-14',
         isDragging() && 'cursor-grabbing',
-        isExpanded() && getPositionClasses()
+        isExpanded() ? '' : getPositionClasses()
       )}
-      style={position().x !== 0 || position().y !== 0 ? {
+      style={isExpanded() && (position().x !== 0 || position().y !== 0) ? {
         left: `${position().x}px`,
         top: `${position().y}px`,
       } : {}}
-      onMouseDown={handleDragStart}
+      onMouseDown={(e) => {
+        console.log('[DEBUG] Widget onMouseDown, target:', (e.target as HTMLElement).tagName, 'className:', (e.target as HTMLElement).className);
+        handleDragStart(e);
+      }}
     >
       {/* Collapsed FAB */}
       <Show when={!isExpanded()}>
-        <button
-          onClick={() => setIsExpanded(true)}
+        <Button
+          onClick={() => {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const widgetWidth = 384; // w-96 = 24rem = 384px
+            const widgetHeight = 600; // h-[600px]
+            setPosition({
+              x: windowWidth - widgetWidth - 16, // 16 = 4rem = 16px padding
+              y: windowHeight - widgetHeight - 16
+            });
+            setIsExpanded(true);
+          }}
+          variant="ghost"
+          size="icon"
           class={cn(
-            'w-full h-full rounded-full',
-            'bg-gradient-to-br from-violet-500 to-purple-600',
-            'hover:from-violet-600 hover:to-purple-700',
-            'text-white shadow-lg',
-            'transition-all duration-300 ease-out',
-            'hover:scale-110 active:scale-95',
-            'flex items-center justify-center',
-            'cursor-pointer'
+            'w-full h-full',
+            'bg-transparent',
+            'shadow-none',
+            'p-0',
+            'hover:bg-transparent active:bg-transparent',
+            'hover:scale-110',
+            'transition-all duration-300 ease-out'
           )}
+          style="background: transparent; box-shadow: none; padding: 0; border: none;"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-            />
-          </svg>
-        </button>
+          <img
+            src={annaiIcon()}
+            alt="Annai"
+            class="h-full w-full object-contain"
+          />
+        </Button>
       </Show>
 
       {/* Expanded Widget */}
-      <Show when={isExpanded()}>
+      <Show when={isExpanded() || isExiting()}>
         <div
           class={cn(
             'w-full h-full rounded-2xl',
-            'bg-white dark:bg-gray-900',
-            'border border-gray-200 dark:border-gray-700',
+            'bg-zinc-950',
+            'border border-gray-800',
             'flex flex-col overflow-hidden',
-            'transition-all duration-300 ease-out',
             'shadow-2xl'
           )}
+          style={`
+            animation: ${isExiting() ? 'macosSpringExit' : 'macosSpringEnter'} 400ms cubic-bezier(0.34, 1.25, 0.64, 1) forwards;
+            transform-origin: bottom right;
+          `}
         >
           {/* Header */}
           <div
             class={cn(
               'drag-handle flex items-center justify-between',
               'px-4 py-3',
-              'bg-gradient-to-r from-violet-500 to-purple-600',
-              'text-white cursor-grab',
+              'bg-gray-900 border-b border-gray-800',
+              'text-gray-100 cursor-grab',
               'select-none'
             )}
           >
             <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+              <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5"
+                  class="h-5 w-5 text-gray-300"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -185,73 +243,45 @@ function FloatingWidget(props: WidgetProps) {
                   />
                 </svg>
               </div>
-              <span class="font-semibold">AI Assistant</span>
+              <span class="font-semibold text-gray-100">Annai</span>
             </div>
 
-            <div class="flex items-center gap-1">
-              {/* Minimize Button */}
+            <div class="flex items-center gap-2">
+              {/* Minimize Button - macOS style yellow button */}
               <button
                 onClick={() => setIsMinimized(!isMinimized())}
-                class={cn(
-                  'p-1.5 rounded-lg',
-                  'hover:bg-white/10',
-                  'transition-colors duration-150',
-                  'cursor-pointer'
-                )}
+                class="group relative w-4 h-4 rounded-full bg-yellow-500 hover:bg-yellow-400 transition-all duration-200 flex items-center justify-center cursor-pointer outline-none focus:outline-none"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d={isMinimized()
-                      ? 'M19 9l-7 7-7-7'
-                      : 'M5 15l7-7 7 7'}
-                  />
-                </svg>
+                <span class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-800 font-bold leading-none transition-opacity duration-200">
+                  -
+                </span>
               </button>
 
-              {/* Close Button */}
+              {/* Close Button - macOS style red button */}
               <button
-                onClick={() => setIsExpanded(false)}
-                class={cn(
-                  'p-1.5 rounded-lg',
-                  'hover:bg-white/10',
-                  'transition-colors duration-150',
-                  'cursor-pointer'
-                )}
+                onClick={() => {
+                  setIsExiting(true);
+                  setTimeout(() => {
+                    setIsExpanded(false);
+                    setIsExiting(false);
+                  }, 400);
+                }}
+                class="group relative w-4 h-4 rounded-full bg-red-500 hover:bg-red-400 transition-all duration-200 flex items-center justify-center cursor-pointer outline-none focus:outline-none"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <span class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-800 font-bold leading-none transition-opacity duration-200">
+                  ×
+                </span>
               </button>
             </div>
           </div>
 
           {/* Messages Area */}
           <Show when={!isMinimized()}>
-            <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-800/50">
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900/50">
               <Show
                 when={messages().length > 0}
                 fallback={
-                  <div class="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
+                  <div class="flex flex-col items-center justify-center h-full text-gray-500">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       class="h-12 w-12 mb-2"
@@ -279,10 +309,10 @@ function FloatingWidget(props: WidgetProps) {
                       )}
                     >
                       <Show when={message.role !== 'user'}>
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4 text-white"
+                            class="h-4 w-4 text-gray-300"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -299,10 +329,10 @@ function FloatingWidget(props: WidgetProps) {
 
                       <div
                         class={cn(
-                          'max-w-[75%] px-4 py-2 rounded-2xl',
+                          'max-w-[75%] px-4 py-0 rounded-2xl',
                           message.role === 'user'
-                            ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
-                            : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600'
+                            ? 'bg-gray-700 text-gray-100'
+                            : 'bg-gray-800 text-gray-100 border border-gray-700'
                         )}
                       >
                         <p class="text-sm whitespace-pre-wrap break-words">
@@ -311,10 +341,10 @@ function FloatingWidget(props: WidgetProps) {
                       </div>
 
                       <Show when={message.role === 'user'}>
-                        <div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+                        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4 text-gray-600 dark:text-gray-300"
+                            class="h-4 w-4 text-gray-300"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -335,37 +365,48 @@ function FloatingWidget(props: WidgetProps) {
             </div>
 
             {/* Input Area */}
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div class="p-4 border-t border-gray-800 bg-zinc-950">
               <div class="flex gap-2">
                 <input
                   type="text"
                   value={inputValue()}
-                  onInput={(e) => setInputValue(e.currentTarget.value)}
-                  onKeyPress={handleKeyPress}
+                  onInput={(e) => {
+                    console.log('[DEBUG] onInput called, value:', e.currentTarget.value);
+                    setInputValue(e.currentTarget.value);
+                  }}
+                  onCompositionStart={() => {
+                    console.log('[DEBUG] onCompositionStart called');
+                    setIsComposing(true);
+                  }}
+                  onCompositionEnd={(e) => {
+                    console.log('[DEBUG] onCompositionEnd called, value:', e.currentTarget.value);
+                    setIsComposing(false);
+                    // Remove setInputValue call to prevent unnecessary re-rendering and focus loss
+                    // The value is already updated by onInput event
+                  }}
+                  onKeyDown={handleKeyPress}
+                  onBlur={(e) => {
+                    console.log('[DEBUG] Input lost focus, relatedTarget:', (e.relatedTarget as HTMLElement)?.tagName, 'className:', (e.relatedTarget as HTMLElement)?.className);
+                  }}
                   placeholder="Type a message..."
                   class={cn(
                     'flex-1 px-4 py-2.5 rounded-xl',
-                    'bg-gray-100 dark:bg-gray-800',
-                    'border border-gray-200 dark:border-gray-700',
-                    'focus:outline-none focus:ring-2 focus:ring-violet-500',
-                    'text-gray-900 dark:text-gray-100',
-                    'placeholder-gray-400 dark:placeholder-gray-500',
+                    'bg-gray-800',
+                    'border border-gray-700',
+                    'focus:outline-none focus:ring-2 focus:ring-gray-600',
+                    'text-gray-100',
+                    'placeholder-gray-500',
                     'transition-all duration-200'
                   )}
                 />
-                <button
-                  onClick={handleSendMessage}
+                <Button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }}
                   disabled={!inputValue().trim()}
-                  class={cn(
-                    'px-4 py-2.5 rounded-xl',
-                    'bg-gradient-to-br from-violet-500 to-purple-600',
-                    'hover:from-violet-600 hover:to-purple-700',
-                    'disabled:opacity-50 disabled:cursor-not-allowed',
-                    'text-white font-medium',
-                    'transition-all duration-200',
-                    'flex items-center justify-center',
-                    'cursor-pointer'
-                  )}
+                  variant="default"
+                  class="px-4 py-2.5 rounded-xl"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -381,7 +422,7 @@ function FloatingWidget(props: WidgetProps) {
                       d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
                     />
                   </svg>
-                </button>
+                </Button>
               </div>
             </div>
           </Show>

@@ -395,6 +395,17 @@ WXT는 파일 시스템 기반 라우팅을 사용합니다:
 - JSX 설정: `jsx: "preserve"`, `jsxImportSource: "solid-js"`
 - fine-grained reactivity (createSignal, 등) 사용
 
+### UI 컴포넌트 라이브러리 규칙
+
+**중요**: 모든 UI 컴포넌트는 **반드시 SolidJS 전용 라이브러리**를 사용해야 합니다.
+
+사용 가능한 라이브러리:
+- **Kobalte** (`@kobalte/core`) - Headless 컴포넌트, 접근성 중심 (현재 사용 중)
+- **Solid UI** (solid-ui.com) - Kobalte 기반 사전 제작 컴포넌트, shadcn/ui 스타일
+- **Flowbite Solid** - 600+ 컴포넌트, SolidJS 공식 지원
+
+React, Vue 등 다른 프레임워크용 UI 라이브러리는 사용하지 마세요.
+
 ## 확장 프로그램 개발 참고사항
 
 1. **콘텐츠 스크립트**: 현재 `*://*.google.com/*` 에서만 실행되도록 설정됨

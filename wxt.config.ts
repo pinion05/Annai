@@ -5,5 +5,11 @@ export default defineConfig({
   modules: ['@wxt-dev/module-solid'],
   manifest: {
     host_permissions: ['*://*.notion.so/*', '*://notion.so/*'],
+    web_accessible_resources: [
+      {
+        resources: ['/icon/*'],
+        matches: ['*://*.notion.so/*', '*://notion.so/*'],
+      },
+    ],
   },
 });
