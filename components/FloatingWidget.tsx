@@ -19,6 +19,17 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
   const [annaiIcon, setAnnaiIcon] = useState('');
   const [isComposing, setIsComposing] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+  const [view, setView] = useState<'chat' | 'settings'>('chat');
+  const [settingsDraft, setSettingsDraft] = useState({
+    openrouterApiKey: '',
+    notionApiKey: '',
+  });
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [healthStatus, setHealthStatus] = useState<{
+    openrouter?: { ok: boolean; status: number; error?: string };
+    notion?: { ok: boolean; status: number; error?: string };
+  }>({});
 
   const { messages, sendMessage, isLoading } = useChat();
   const widgetRef = useRef<HTMLDivElement>(null);
@@ -35,6 +46,21 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Load stored keys when opening settings
+  useEffect(() => {
+    if (view !== 'settings' || typeof browser === 'undefined') return;
+    browser.storage.local.get(['openrouter_api_key', 'notion_api_key']).then((result) => {
+      const openrouterApiKey =
+        typeof result.openrouter_api_key === 'string' ? result.openrouter_api_key : '';
+      const notionApiKey = typeof result.notion_api_key === 'string' ? result.notion_api_key : '';
+      setSettingsDraft({
+        openrouterApiKey,
+        notionApiKey,
+      });
+      setIsDirty(false);
+    });
+  }, [view]);
 
   // Drag event handlers
   useEffect(() => {
@@ -84,6 +110,22 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
     if (!inputValue.trim() || isLoading) return;
     sendMessage(inputValue);
     setInputValue('');
+  };
+
+  const handleSaveSettings = async () => {
+    if (typeof browser === 'undefined' || isSaving) return;
+    setIsSaving(true);
+    try {
+      await browser.storage.local.set({
+        openrouter_api_key: settingsDraft.openrouterApiKey,
+        notion_api_key: settingsDraft.notionApiKey,
+      });
+      setIsDirty(false);
+      const result = await browser.runtime.sendMessage({ type: 'RUN_HEALTH_CHECK' });
+      setHealthStatus(result ?? {});
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -180,6 +222,16 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                aria-label={view === 'chat' ? 'Open settings' : 'Back to chat'}
+                onClick={() => setView(view === 'chat' ? 'settings' : 'chat')}
+                className="group relative w-6 h-6 rounded-full bg-gray-800 hover:bg-gray-700 transition-all duration-200 flex items-center justify-center cursor-pointer outline-none focus:outline-none"
+              >
+                <span className="text-[12px] text-gray-200 leading-none">
+                  {view === 'chat' ? '⚙' : '←'}
+                </span>
+              </button>
+
               {/* Minimize Button */}
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
@@ -209,7 +261,7 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
           </div>
 
           {/* Messages Area */}
-          {!isMinimized && (
+          {!isMinimized && view === 'chat' && (
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900/50">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500">
@@ -290,8 +342,69 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
             </div>
           )}
 
+          {/* Settings Area */}
+          {!isMinimized && view === 'settings' && (
+            <div className="flex-1 p-4 space-y-4 bg-gray-900/50">
+              <div>
+                <p className="text-sm text-gray-300">Settings</p>
+                <p className="text-xs text-gray-500">Configure API keys for OpenRouter and Notion.</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label htmlFor="openrouter-api-key" className="text-xs text-gray-400">
+                    OpenRouter API Key
+                  </label>
+                  <Input
+                    id="openrouter-api-key"
+                    aria-label="OpenRouter API Key"
+                    type="text"
+                    value={settingsDraft.openrouterApiKey}
+                    onChange={(e) => {
+                      setSettingsDraft((prev) => ({ ...prev, openrouterApiKey: e.target.value }));
+                      setIsDirty(true);
+                    }}
+                    placeholder="OpenRouter API Key"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label htmlFor="notion-api-key" className="text-xs text-gray-400">
+                    Notion API Key
+                  </label>
+                  <Input
+                    id="notion-api-key"
+                    aria-label="Notion API Key"
+                    type="text"
+                    value={settingsDraft.notionApiKey}
+                    onChange={(e) => {
+                      setSettingsDraft((prev) => ({ ...prev, notionApiKey: e.target.value }));
+                      setIsDirty(true);
+                    }}
+                    placeholder="Notion API Key"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={handleSaveSettings} disabled={!isDirty || isSaving}>
+                  {isSaving ? 'Saving...' : 'Save'}
+                </Button>
+              </div>
+
+              <div className="text-xs text-gray-400 space-y-1">
+                <div>
+                  OpenRouter: {healthStatus.openrouter ? (healthStatus.openrouter.ok ? 'Connected' : 'Failed') : '—'}
+                </div>
+                <div>
+                  Notion: {healthStatus.notion ? (healthStatus.notion.ok ? 'Connected' : 'Failed') : '—'}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Input Area */}
-          {!isMinimized && (
+          {!isMinimized && view === 'chat' && (
             <div className="p-4 border-t border-gray-800 bg-zinc-950">
               <div className="flex gap-2">
                 <Input
