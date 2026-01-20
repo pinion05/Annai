@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { runHealthChecks } from '@/lib/health-check';
 
 export default defineBackground(() => {
   const NOTION_API_BASE = 'https://api.notion.com/v1';
@@ -108,6 +109,22 @@ export default defineBackground(() => {
 
   // Handle API key storage
   browser.runtime.onMessage.addListener((message, _, sendResponse) => {
+    if (message.type === 'RUN_HEALTH_CHECK') {
+      browser.storage.local
+        .get(['openrouter_api_key', 'notion_api_key'])
+        .then((result) => {
+          const openrouterKey = result.openrouter_api_key as string | undefined;
+          const notionKey = result.notion_api_key as string | undefined;
+          return runHealthChecks({
+            openrouterKey,
+            notionKey,
+            notionVersion: NOTION_VERSION,
+          });
+        })
+        .then(sendResponse);
+      return true;
+    }
+
     if (message.type === 'SET_NOTION_API_KEY') {
       browser.storage.local.set({ notion_api_key: message.apiKey }).then(() => {
         sendResponse({ success: true });
