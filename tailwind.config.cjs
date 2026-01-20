@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["variant", [".dark &", '[data-kb-theme="dark"] &']],
-  content: ["./entrypoints/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  content: ["./entrypoints/**/*.{ts,tsx,css}", "./components/**/*.{ts,tsx}"],
   theme: {
     container: {
       center: true,
@@ -11,6 +11,9 @@ module.exports = {
       },
     },
     extend: {
+      zIndex: {
+        '9999': '9999',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

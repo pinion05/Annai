@@ -1,18 +1,12 @@
 "use client";
 
-import { AssistantModal } from "@assistant-ui/react";
-import type { ThreadConfig } from "@assistant-ui/react";
+// Basic Assistant Provider wrapper
+// Note: Full assistant-ui integration requires additional setup based on specific version
 
 interface AssistantProviderProps {
   children: React.ReactNode;
-  config?: ThreadConfig;
 }
 
-export function AssistantProvider({ children, config }: AssistantProviderProps) {
-  return (
-    <>
-      {children}
-      <AssistantModal />
-    </>
-  );
+export function AssistantProvider({ children }: AssistantProviderProps) {
+  return <>{children}</>;
 }
