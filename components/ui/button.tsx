@@ -1,58 +1,51 @@
-import { Button as ButtonPrimitive } from '@kobalte/core/button';
-import { PolymorphicProps } from '@kobalte/core/polymorphic';
-import { cn } from '@/lib/utils';
-import { splitProps, type ComponentProps, type ValidComponent } from 'solid-js';
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
 
-export type ButtonProps<T extends ValidComponent = 'button'> = ComponentProps<T> & {
-  variant?: 'default' | 'destructive' | 'outline' | 'ghost' | 'link' | 'gradient';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-};
-
-const getVariantClasses = (variant: ButtonProps['variant']): string => {
-  switch (variant) {
-    case 'destructive':
-      return 'bg-red-600 text-white hover:bg-red-700';
-    case 'outline':
-      return 'border border-gray-600 bg-transparent hover:bg-gray-800 text-gray-200';
-    case 'ghost':
-      return 'hover:bg-gray-800 text-gray-200';
-    case 'link':
-      return 'underline-offset-4 hover:underline text-gray-400 hover:text-gray-200';
-    case 'gradient':
-      return 'bg-gray-700 text-gray-100 hover:bg-gray-600';
-    default:
-      return 'bg-gray-700 text-gray-100 hover:bg-gray-600';
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-600 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-gray-700 text-gray-100 hover:bg-gray-600",
+        destructive: "bg-red-600 text-white hover:bg-red-700",
+        outline: "border border-gray-600 bg-transparent hover:bg-gray-800 text-gray-200",
+        ghost: "hover:bg-gray-800 text-gray-200",
+        link: "underline-offset-4 hover:underline text-gray-400 hover:text-gray-200",
+      },
+      size: {
+        default: "h-10 py-2 px-4",
+        sm: "h-9 px-3 rounded-md",
+        lg: "h-11 px-8 rounded-md",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
   }
-};
+)
 
-const getSizeClasses = (size: ButtonProps['size']): string => {
-  switch (size) {
-    case 'sm':
-      return 'h-9 px-3 rounded-md';
-    case 'lg':
-      return 'h-11 px-8 rounded-md';
-    case 'icon':
-      return 'h-10 w-10';
-    default:
-      return 'h-10 py-2 px-4';
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
   }
-};
+)
+Button.displayName = "Button"
 
-export const Button = <T extends ValidComponent = 'button'>(props: PolymorphicProps<T, ButtonProps<T>>) => {
-  const [local, rest] = splitProps(props as ButtonProps, ['variant', 'size', 'class']);
-
-  const variant = local.variant ?? 'default';
-  const size = local.size ?? 'default';
-
-  return (
-    <ButtonPrimitive
-      class={cn(
-        'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-600 disabled:opacity-50 disabled:pointer-events-none',
-        getVariantClasses(variant),
-        getSizeClasses(size),
-        local.class
-      )}
-      {...rest}
-    />
-  );
-};
+export { Button, buttonVariants }
