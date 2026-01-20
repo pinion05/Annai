@@ -2,7 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-<!-- MANUAL: The Sisyphus multi-agent system configuration is in ~/.claude/CLAUDE.md - do not duplicate here -->
 
 <!-- MANUAL: Project-specific configuration below -->
 
