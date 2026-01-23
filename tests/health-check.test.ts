@@ -28,7 +28,7 @@ describe('runHealthChecks', () => {
           ok: true,
           status: 200,
           json: async () => ({
-            choices: [{ message: { content: 'hi' } }],
+            data: [],
           }),
         },
         { ok: true, status: 200 },
@@ -72,7 +72,7 @@ describe('runHealthChecks', () => {
     expect(result.openrouter.error).toMatch(/credits/i);
   });
 
-  it('fails OpenRouter check when response content is empty', async () => {
+  it('fails OpenRouter check when response data is missing', async () => {
     const result = await runHealthChecks({
       openrouterKey: 'or-key',
       notionKey: 'notion-key',
@@ -82,14 +82,14 @@ describe('runHealthChecks', () => {
           ok: true,
           status: 200,
           json: async () => ({
-            choices: [{ message: { content: '' } }],
+            data: null,
           }),
         },
         { ok: true, status: 200 },
       ]),
     });
     expect(result.openrouter.ok).toBe(false);
-    expect(result.openrouter.error).toMatch(/content/i);
+    expect(result.openrouter.error).toMatch(/data/i);
   });
 
   it('fails OpenRouter check on timeout', async () => {

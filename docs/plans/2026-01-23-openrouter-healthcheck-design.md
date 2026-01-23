@@ -10,15 +10,12 @@ Make OpenRouter health checks validate the API key by calling a model endpoint w
 - Extend tests to cover the new OpenRouter response validation.
 
 ## Approach
-- Send `POST https://openrouter.ai/api/v1/chat/completions` with:
-  - `model: "z-ai/glm-4.5-air:free"`
-  - `messages: [{ role: "user", content: "you must just say hi" }]`
-  - `max_tokens: 5`, `temperature: 0`
+- Send `GET https://openrouter.ai/api/v1/models/user` with `Authorization: Bearer <key>`.
 - Use a 5-second timeout; if the request times out, mark as **Failed**.
 - Treat the check as **Connected** only when:
   - HTTP status is 200, and
   - response JSON has no `error`, and
-  - `choices[0].message.content` is a non-empty string.
+  - `data` is an array (may be empty).
 
 ## Data Flow
 `FloatingWidget` → `RUN_HEALTH_CHECK` (includes current input keys) → background → `runHealthChecks` → OpenRouter chat completion → UI status update.

@@ -37,18 +37,11 @@ export async function runHealthChecks({
       const controller = new AbortController();
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
       const response = await Promise.race<FetcherResponse>([
-        fetcher('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
+        fetcher('https://openrouter.ai/api/v1/models/user', {
+          method: 'GET',
           headers: {
             Authorization: `Bearer ${openrouterKey}`,
-            'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            model: 'z-ai/glm-4.5-air:free',
-            messages: [{ role: 'user', content: 'you must just say hi' }],
-            max_tokens: 5,
-            temperature: 0,
-          }),
           signal: controller.signal,
         }),
         new Promise<FetcherResponse>((_, reject) => {
@@ -85,10 +78,9 @@ export async function runHealthChecks({
       if (errorMessage) {
         return { ok: false, status: response.status, error: errorMessage };
       }
-      const content = (data as { choices?: Array<{ message?: { content?: unknown } }> })?.choices?.[0]?.message
-        ?.content;
-      if (typeof content !== 'string' || content.trim().length === 0) {
-        return { ok: false, status: response.status, error: 'OpenRouter response missing content' };
+      const models = (data as { data?: unknown })?.data;
+      if (!Array.isArray(models)) {
+        return { ok: false, status: response.status, error: 'OpenRouter response missing data' };
       }
       return { ok: true, status: response.status };
     } catch (error) {
