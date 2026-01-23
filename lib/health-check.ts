@@ -33,24 +33,15 @@ export async function runHealthChecks({
       return { ok: false, status: 0, error: 'Missing OpenRouter API key' };
     }
     try {
-      const response = await fetcher('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${openrouterKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'z-ai/glm-4.5-air:free',
-          messages: [{ role: 'user', content: 'you must just say hi' }],
-          max_tokens: 5,
-          temperature: 0,
-        }),
+      const response = await fetcher('https://openrouter.ai/api/v1/key', {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${openrouterKey}` },
       });
       if (!response.ok) {
         return { ok: false, status: response.status, error: 'OpenRouter request failed' };
       }
       if (typeof response.json !== 'function') {
-        return { ok: false, status: response.status, error: 'OpenRouter response missing JSON' };
+        return { ok: false, status: response.status, error: 'OpenRouter response missing key info' };
       }
       let data: unknown;
       try {
@@ -69,10 +60,9 @@ export async function runHealthChecks({
       if (errorMessage) {
         return { ok: false, status: response.status, error: errorMessage };
       }
-      const content = (data as { choices?: Array<{ message?: { content?: unknown } }> })?.choices?.[0]?.message
-        ?.content;
-      if (typeof content !== 'string' || content.trim().length === 0) {
-        return { ok: false, status: response.status, error: 'OpenRouter response missing content' };
+      const keyInfo = (data as { data?: unknown })?.data;
+      if (!keyInfo || typeof keyInfo !== 'object') {
+        return { ok: false, status: response.status, error: 'OpenRouter response missing key info' };
       }
       return { ok: true, status: response.status };
     } catch (error) {

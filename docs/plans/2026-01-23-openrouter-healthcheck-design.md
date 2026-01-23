@@ -1,22 +1,19 @@
 # OpenRouter Health Check Design
 
 ## Goal
-Make OpenRouter health checks validate the API key by sending a minimal chat completion request and ensuring a real assistant response is returned.
+Make OpenRouter health checks validate the API key by fetching key metadata and ensuring a valid key response is returned.
 
 ## Scope
-- Update OpenRouter health check to call `POST /chat/completions` with a fixed prompt and model.
+- Update OpenRouter health check to call `GET /key` with the configured API key.
 - Keep Notion health check unchanged.
 - Extend tests to cover the new OpenRouter response validation.
 
 ## Approach
-- Send a minimal request:
-  - `model: "z-ai/glm-4.5-air:free"`
-  - `messages: [{ role: "user", content: "you must just say hi" }]`
-  - `max_tokens: 5`, `temperature: 0`
+- Send `GET https://openrouter.ai/api/v1/key` with `Authorization: Bearer <key>`.
 - Treat the check as **Connected** only when:
   - HTTP status is 2xx, and
-  - `choices[0].message.content` is a non-empty string.
-- If JSON is missing/invalid or content is empty, mark as **Failed** with a clear error.
+  - the JSON response includes a non-empty `data` object.
+- If JSON is missing/invalid or key info is missing, mark as **Failed** with a clear error.
 
 ## Data Flow
 `FloatingWidget` → `RUN_HEALTH_CHECK` message → background → `runHealthChecks` → OpenRouter chat completion → response parsing → UI status update.

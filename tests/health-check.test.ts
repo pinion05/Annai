@@ -28,7 +28,7 @@ describe('runHealthChecks', () => {
           ok: true,
           status: 200,
           json: async () => ({
-            choices: [{ message: { content: 'hi' } }],
+            data: { label: 'test-key' },
           }),
         },
         { ok: true, status: 200 },
@@ -38,7 +38,7 @@ describe('runHealthChecks', () => {
     expect(result.notion.ok).toBe(true);
   });
 
-  it('fails OpenRouter check when response has no assistant content', async () => {
+  it('fails OpenRouter check when key info is missing', async () => {
     const result = await runHealthChecks({
       openrouterKey: 'or-key',
       notionKey: 'notion-key',
@@ -47,15 +47,13 @@ describe('runHealthChecks', () => {
         {
           ok: true,
           status: 200,
-          json: async () => ({
-            choices: [{ message: { content: '' } }],
-          }),
+          json: async () => ({}),
         },
         { ok: true, status: 200 },
       ]),
     });
     expect(result.openrouter.ok).toBe(false);
-    expect(result.openrouter.error).toMatch(/content/i);
+    expect(result.openrouter.error).toMatch(/key/i);
   });
 
   it('propagates failing status for OpenRouter', async () => {
