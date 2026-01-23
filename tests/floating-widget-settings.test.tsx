@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import FloatingWidget from '@/components/FloatingWidget';
@@ -82,5 +82,40 @@ describe('FloatingWidget settings', () => {
 
     expect(await screen.findByText(/openrouter: connected/i)).toBeInTheDocument();
     expect(await screen.findByText(/notion: failed/i)).toBeInTheDocument();
+  });
+
+  it('blocks document keydown handlers for settings inputs', async () => {
+    render(<FloatingWidget initialState="expanded" />);
+    await userEvent.click(screen.getByLabelText(/open settings/i));
+
+    const notionInput = await screen.findByLabelText(/notion api key/i);
+    const documentKeydownSpy = vi.fn();
+    document.addEventListener('keydown', documentKeydownSpy);
+
+    try {
+      fireEvent.keyDown(notionInput, { key: 'v', metaKey: true, bubbles: true });
+      expect(documentKeydownSpy).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', documentKeydownSpy);
+    }
+  });
+
+  it('blocks document paste handlers for settings inputs', async () => {
+    render(<FloatingWidget initialState="expanded" />);
+    await userEvent.click(screen.getByLabelText(/open settings/i));
+
+    const notionInput = await screen.findByLabelText(/notion api key/i);
+    const documentPasteSpy = vi.fn();
+    document.addEventListener('paste', documentPasteSpy);
+
+    try {
+      fireEvent.paste(notionInput, {
+        clipboardData: { getData: () => '' },
+        bubbles: true,
+      });
+      expect(documentPasteSpy).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('paste', documentPasteSpy);
+    }
   });
 });

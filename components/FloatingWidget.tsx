@@ -153,6 +153,10 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
     }
   };
 
+  const stopEventPropagation = useCallback((e: React.SyntheticEvent) => {
+    e.stopPropagation();
+  }, []);
+
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('.drag-handle') || target.closest('button')) return;
@@ -179,6 +183,11 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
         top: isExpanded && (positionState.x !== 0 || positionState.y !== 0) ? `${positionState.y}px` : undefined,
       }}
       onMouseDown={handleMouseDown}
+      onKeyDown={stopEventPropagation}
+      onKeyUp={stopEventPropagation}
+      onPaste={stopEventPropagation}
+      onCopy={stopEventPropagation}
+      onCut={stopEventPropagation}
     >
       {/* Collapsed FAB */}
       {!isExpanded && (
