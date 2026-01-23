@@ -1,19 +1,21 @@
 # OpenRouter Health Check Design
 
 ## Goal
-Make OpenRouter health checks validate the API key by fetching key metadata and ensuring a valid key response is returned.
+Make OpenRouter health checks validate the API key by calling a model endpoint with a 5s timeout and only treating HTTP 200 as Connected.
 
 ## Scope
-- Update OpenRouter health check to call `GET /key` with the configured API key.
+- Update OpenRouter health check to call `POST /chat/completions` with a fixed prompt and model.
+- Add a 5s timeout; non-200 or timeout means Failed.
 - Keep Notion health check unchanged.
 - Extend tests to cover the new OpenRouter response validation.
 
 ## Approach
-- Send `GET https://openrouter.ai/api/v1/key` with `Authorization: Bearer <key>`.
-- Treat the check as **Connected** only when:
-  - HTTP status is 2xx, and
-  - the JSON response includes a non-empty `data` object.
-- If JSON is missing/invalid or key info is missing, mark as **Failed** with a clear error.
+- Send `POST https://openrouter.ai/api/v1/chat/completions` with:
+  - `model: "z-ai/glm-4.5-air:free"`
+  - `messages: [{ role: "user", content: "you must just say hi" }]`
+  - `max_tokens: 5`, `temperature: 0`
+- Use a 5-second timeout; if the request times out, mark as **Failed**.
+- Treat the check as **Connected** only when HTTP status is 200.
 
 ## Data Flow
 `FloatingWidget` → `RUN_HEALTH_CHECK` message → background → `runHealthChecks` → OpenRouter chat completion → response parsing → UI status update.

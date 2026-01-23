@@ -12,7 +12,6 @@ export type HealthCheckSummary = {
 type FetcherResponse = {
   ok: boolean;
   status: number;
-  json?: () => Promise<unknown>;
 };
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<FetcherResponse>;
@@ -28,44 +27,48 @@ export async function runHealthChecks({
   notionVersion: string;
   fetcher?: Fetcher;
 }): Promise<HealthCheckSummary> {
+  const OPENROUTER_TIMEOUT_MS = 5000;
   const openrouter = await (async (): Promise<HealthCheckResult> => {
     if (!openrouterKey) {
       return { ok: false, status: 0, error: 'Missing OpenRouter API key' };
     }
     try {
-      const response = await fetcher('https://openrouter.ai/api/v1/key', {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${openrouterKey}` },
+      const controller = new AbortController();
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      const response = await Promise.race<FetcherResponse>([
+        fetcher('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${openrouterKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'z-ai/glm-4.5-air:free',
+            messages: [{ role: 'user', content: 'you must just say hi' }],
+            max_tokens: 5,
+            temperature: 0,
+          }),
+          signal: controller.signal,
+        }),
+        new Promise<FetcherResponse>((_, reject) => {
+          timeoutId = setTimeout(() => {
+            controller.abort();
+            reject(new Error('OpenRouter request timed out'));
+          }, OPENROUTER_TIMEOUT_MS);
+        }),
+      ]).finally(() => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       });
       if (!response.ok) {
         return { ok: false, status: response.status, error: 'OpenRouter request failed' };
       }
-      if (typeof response.json !== 'function') {
-        return { ok: false, status: response.status, error: 'OpenRouter response missing key info' };
-      }
-      let data: unknown;
-      try {
-        data = await response.json();
-      } catch (error) {
-        return {
-          ok: false,
-          status: response.status,
-          error: error instanceof Error ? error.message : 'OpenRouter response invalid JSON',
-        };
-      }
-      const errorMessage =
-        typeof (data as { error?: { message?: string } })?.error?.message === 'string'
-          ? (data as { error?: { message?: string } }).error?.message
-          : undefined;
-      if (errorMessage) {
-        return { ok: false, status: response.status, error: errorMessage };
-      }
-      const keyInfo = (data as { data?: unknown })?.data;
-      if (!keyInfo || typeof keyInfo !== 'object') {
-        return { ok: false, status: response.status, error: 'OpenRouter response missing key info' };
-      }
       return { ok: true, status: response.status };
     } catch (error) {
+      if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('timed out'))) {
+        return { ok: false, status: 0, error: 'OpenRouter request timed out' };
+      }
       return {
         ok: false,
         status: 0,
