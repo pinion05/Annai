@@ -7,6 +7,11 @@ export default defineBackground(() => {
 
   // Handle messages from content script
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    const messageType = typeof message?.type === 'string' ? message.type : '';
+    if (!messageType.startsWith('NOTION_')) {
+      return;
+    }
+
     const handleNotionRequest = async () => {
       const storage = await browser.storage.local.get('notion_api_key');
       const apiKey = storage.notion_api_key;
