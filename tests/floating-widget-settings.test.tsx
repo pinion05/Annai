@@ -78,7 +78,11 @@ describe('FloatingWidget settings', () => {
       openrouter_api_key: 'abc',
       notion_api_key: '',
     });
-    expect(sendMessage).toHaveBeenCalledWith({ type: 'RUN_HEALTH_CHECK' });
+    expect(sendMessage).toHaveBeenCalledWith({
+      type: 'RUN_HEALTH_CHECK',
+      openrouterKey: 'abc',
+      notionKey: '',
+    });
 
     expect(await screen.findByText(/openrouter: connected/i)).toBeInTheDocument();
     expect(await screen.findByText(/notion: failed/i)).toBeInTheDocument();

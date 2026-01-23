@@ -18,7 +18,7 @@ Make OpenRouter health checks validate the API key by calling a model endpoint w
 - Treat the check as **Connected** only when HTTP status is 200.
 
 ## Data Flow
-`FloatingWidget` → `RUN_HEALTH_CHECK` message → background → `runHealthChecks` → OpenRouter chat completion → response parsing → UI status update.
+`FloatingWidget` → `RUN_HEALTH_CHECK` (includes current input keys) → background → `runHealthChecks` → OpenRouter chat completion → UI status update.
 
 ## Error Handling
 - Non-2xx: fail with status.

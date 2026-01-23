@@ -139,7 +139,11 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
         notion_api_key: settingsDraft.notionApiKey,
       });
       setIsDirty(false);
-      const result = await browser.runtime.sendMessage({ type: 'RUN_HEALTH_CHECK' });
+      const result = await browser.runtime.sendMessage({
+        type: 'RUN_HEALTH_CHECK',
+        openrouterKey: settingsDraft.openrouterApiKey,
+        notionKey: settingsDraft.notionApiKey,
+      });
       setHealthStatus(result ?? {});
     } finally {
       setIsSaving(false);

@@ -118,8 +118,14 @@ export default defineBackground(() => {
       browser.storage.local
         .get(['openrouter_api_key', 'notion_api_key'])
         .then((result) => {
-          const openrouterKey = result.openrouter_api_key as string | undefined;
-          const notionKey = result.notion_api_key as string | undefined;
+          const openrouterKey =
+            typeof message.openrouterKey === 'string'
+              ? message.openrouterKey
+              : (result.openrouter_api_key as string | undefined);
+          const notionKey =
+            typeof message.notionKey === 'string'
+              ? message.notionKey
+              : (result.notion_api_key as string | undefined);
           return runHealthChecks({
             openrouterKey,
             notionKey,
