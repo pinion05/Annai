@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { runHealthChecks } from '@/lib/health-check';
 
-const makeFetcher = (responses: Array<{ ok: boolean; status: number }>) => {
+const makeFetcher = (responses: Array<{ ok: boolean; status: number; json?: () => Promise<unknown> }>) => {
   const fetcher = vi.fn(async () => responses.shift()!);
   return fetcher;
 };
@@ -24,7 +24,13 @@ describe('runHealthChecks', () => {
       notionKey: 'notion-key',
       notionVersion: '2022-06-28',
       fetcher: makeFetcher([
-        { ok: true, status: 200 },
+        {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            choices: [{ message: { content: 'hi' } }],
+          }),
+        },
         { ok: true, status: 200 },
       ]),
     });
@@ -44,6 +50,46 @@ describe('runHealthChecks', () => {
     });
     expect(result.openrouter.ok).toBe(false);
     expect(result.openrouter.status).toBe(401);
+  });
+
+  it('fails OpenRouter check when response includes error body', async () => {
+    const result = await runHealthChecks({
+      openrouterKey: 'or-key',
+      notionKey: 'notion-key',
+      notionVersion: '2022-06-28',
+      fetcher: makeFetcher([
+        {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            error: { code: 402, message: 'Insufficient credits' },
+          }),
+        },
+        { ok: true, status: 200 },
+      ]),
+    });
+    expect(result.openrouter.ok).toBe(false);
+    expect(result.openrouter.error).toMatch(/credits/i);
+  });
+
+  it('fails OpenRouter check when response content is empty', async () => {
+    const result = await runHealthChecks({
+      openrouterKey: 'or-key',
+      notionKey: 'notion-key',
+      notionVersion: '2022-06-28',
+      fetcher: makeFetcher([
+        {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            choices: [{ message: { content: '' } }],
+          }),
+        },
+        { ok: true, status: 200 },
+      ]),
+    });
+    expect(result.openrouter.ok).toBe(false);
+    expect(result.openrouter.error).toMatch(/content/i);
   });
 
   it('fails OpenRouter check on timeout', async () => {

@@ -12,6 +12,7 @@ export type HealthCheckSummary = {
 type FetcherResponse = {
   ok: boolean;
   status: number;
+  json?: () => Promise<unknown>;
 };
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<FetcherResponse>;
@@ -63,6 +64,31 @@ export async function runHealthChecks({
       });
       if (!response.ok) {
         return { ok: false, status: response.status, error: 'OpenRouter request failed' };
+      }
+      if (typeof response.json !== 'function') {
+        return { ok: false, status: response.status, error: 'OpenRouter response missing JSON' };
+      }
+      let data: unknown;
+      try {
+        data = await response.json();
+      } catch (error) {
+        return {
+          ok: false,
+          status: response.status,
+          error: error instanceof Error ? error.message : 'OpenRouter response invalid JSON',
+        };
+      }
+      const errorMessage =
+        typeof (data as { error?: { message?: string } })?.error?.message === 'string'
+          ? (data as { error?: { message?: string } }).error?.message
+          : undefined;
+      if (errorMessage) {
+        return { ok: false, status: response.status, error: errorMessage };
+      }
+      const content = (data as { choices?: Array<{ message?: { content?: unknown } }> })?.choices?.[0]?.message
+        ?.content;
+      if (typeof content !== 'string' || content.trim().length === 0) {
+        return { ok: false, status: response.status, error: 'OpenRouter response missing content' };
       }
       return { ok: true, status: response.status };
     } catch (error) {
