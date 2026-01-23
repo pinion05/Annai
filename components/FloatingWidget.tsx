@@ -49,17 +49,35 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
 
   // Load stored keys when opening settings
   useEffect(() => {
-    if (view !== 'settings' || typeof browser === 'undefined') return;
-    browser.storage.local.get(['openrouter_api_key', 'notion_api_key']).then((result) => {
-      const openrouterApiKey =
-        typeof result.openrouter_api_key === 'string' ? result.openrouter_api_key : '';
-      const notionApiKey = typeof result.notion_api_key === 'string' ? result.notion_api_key : '';
+    if (view !== 'settings') return;
+    if (typeof browser === 'undefined' || !browser.storage?.local?.get) {
       setSettingsDraft({
-        openrouterApiKey,
-        notionApiKey,
+        openrouterApiKey: '',
+        notionApiKey: '',
       });
       setIsDirty(false);
-    });
+      return;
+    }
+
+    browser.storage.local
+      .get(['openrouter_api_key', 'notion_api_key'])
+      .then((result) => {
+        const openrouterApiKey =
+          typeof result.openrouter_api_key === 'string' ? result.openrouter_api_key : '';
+        const notionApiKey = typeof result.notion_api_key === 'string' ? result.notion_api_key : '';
+        setSettingsDraft({
+          openrouterApiKey,
+          notionApiKey,
+        });
+        setIsDirty(false);
+      })
+      .catch(() => {
+        setSettingsDraft({
+          openrouterApiKey: '',
+          notionApiKey: '',
+        });
+        setIsDirty(false);
+      });
   }, [view]);
 
   // Drag event handlers

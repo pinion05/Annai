@@ -37,6 +37,18 @@ describe('FloatingWidget settings', () => {
     expect(await screen.findByLabelText(/notion api key/i)).toHaveValue('no');
   });
 
+  it('does not crash when storage is unavailable', async () => {
+    (globalThis as any).browser = {
+      runtime: { getURL: vi.fn(() => '/icon/Annai.png'), sendMessage: vi.fn() },
+    };
+
+    render(<FloatingWidget initialState="expanded" />);
+    await userEvent.click(screen.getByLabelText(/open settings/i));
+
+    expect(await screen.findByLabelText(/openrouter api key/i)).toHaveValue('');
+    expect(await screen.findByLabelText(/notion api key/i)).toHaveValue('');
+  });
+
   it('saves keys and runs health check', async () => {
     const set = vi.fn(async () => undefined);
     const sendMessage = vi.fn(async () => ({
