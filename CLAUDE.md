@@ -103,7 +103,7 @@ Matches: `*://*.notion.so/*`, `*://notion.so/*`
 | Category | Libraries |
 |----------|-----------|
 | Framework | React 19, WXT with @wxt-dev/module-react |
-| UI | @assistant-ui/react, @radix-ui/react-slot, lucide-react |
+| UI | @radix-ui/react-slot |
 | Styling | Tailwind CSS, tailwindcss-animate, clsx, tailwind-merge |
-| AI/Chat | ai (Vercel AI SDK), zod for validation |
+| AI/Chat | zod for validation |
 | Utilities | class-variance-authority (cva) |

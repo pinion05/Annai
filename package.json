@@ -15,13 +15,9 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@assistant-ui/react": "^0.11.57",
-    "@assistant-ui/react-markdown": "^0.11.9",
     "@radix-ui/react-slot": "^1.2.4",
-    "ai": "^6.0.42",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "tailwind-merge": "^3.4.0",
