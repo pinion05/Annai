@@ -29,7 +29,7 @@ Tool usage rules:
 - Use update_page_properties for metadata changes and append_block_to_page for content.
 - Chain tools step-by-step and verify results when unsure.`;
 
-const DEFAULT_MODEL = 'openai/gpt-4o-mini';
+const DEFAULT_MODEL = 'nvidia/nemotron-3-nano-30b-a3b:free';
 
 const parseToolArgs = (raw: string) => {
   if (!raw) return {};
