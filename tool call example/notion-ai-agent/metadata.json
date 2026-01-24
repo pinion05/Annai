@@ -1,5 +1,0 @@
-{
-  "name": "Notion AI Agent",
-  "description": "An intelligent Notion agent powered by Gemini 3 Pro with thinking capabilities. Chat with your Notion workspace to search, create, and manage pages using natural language.",
-  "requestFramePermissions": []
-}
