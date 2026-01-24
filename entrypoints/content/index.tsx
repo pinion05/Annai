@@ -1,7 +1,7 @@
 import '../../lib/content-setup';
 import './style.css';
 import { createRoot } from 'react-dom/client';
-import FloatingWidget from '@/components/FloatingWidget';
+import FloatingWidget from '../../components/FloatingWidget';
 
 const WIDGET_CONTAINER_ID = 'annai-widget-container';
 

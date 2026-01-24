@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { browser } from 'wxt/browser';
-import { notionToolDefinitions, notionTools } from '@/lib/notion-tools';
-import type { Message, ToolCall } from '@/components/chat/types';
+import { notionToolDefinitions, notionTools } from '../../lib/notion-tools';
+import type { Message, ToolCall } from './types';
 
 export interface UseChatOptions {
   apiUrl?: string;

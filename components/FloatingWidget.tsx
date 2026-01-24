@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { browser } from 'wxt/browser';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { useChat } from '@/components/chat/useChat';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { cn } from '../lib/utils';
+import { useChat } from './chat/useChat';
 
 interface WidgetProps {
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
