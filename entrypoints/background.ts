@@ -10,6 +10,20 @@ export default defineBackground(() => {
       return;
     }
 
+    const needsStorage =
+      message.type === 'SET_NOTION_API_KEY' ||
+      message.type === 'GET_NOTION_API_KEY' ||
+      message.type === 'SET_OPENROUTER_API_KEY' ||
+      message.type === 'GET_OPENROUTER_API_KEY' ||
+      message.type === 'RUN_HEALTH_CHECK' ||
+      message.type === 'SET_NOTION_DATABASE_ID' ||
+      message.type.startsWith('NOTION_');
+
+    if (needsStorage && !browser.storage?.local) {
+      sendResponse({ error: 'Storage API unavailable' });
+      return true;
+    }
+
     if (message.type === 'SET_NOTION_API_KEY') {
       browser.storage.local.set({ notion_api_key: message.apiKey }).then(() => {
         sendResponse({ success: true });
@@ -67,7 +81,7 @@ export default defineBackground(() => {
 
         if (openrouterKey) {
           try {
-            const response = await fetch('https://openrouter.ai/api/v1/models', {
+            const response = await fetch('https://openrouter.ai/api/v1/models/user', {
               method: 'GET',
               headers: {
                 Authorization: `Bearer ${openrouterKey}`,
@@ -124,7 +138,15 @@ export default defineBackground(() => {
         return result;
       };
 
-      runHealthCheck().then(sendResponse);
+      runHealthCheck()
+        .then(sendResponse)
+        .catch((error) => {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          sendResponse({
+            openrouter: { ok: false, status: 0, error: errorMessage },
+            notion: { ok: false, status: 0, error: errorMessage },
+          });
+        });
       return true;
     }
 
