@@ -5,25 +5,12 @@ export interface ToolCall {
   result?: unknown;
 }
 
-export interface ToolResult {
-  id: string;
-  name: string;
-  result: unknown;
-}
-
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
   toolCalls?: ToolCall[];
-  toolResults?: ToolResult[];
   toolCallId?: string;
   name?: string;
   isThinking?: boolean;
-  timestamp?: Date;
-}
-
-export interface ChatState {
-  messages: Message[];
-  isLoading: boolean;
 }

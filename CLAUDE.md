@@ -47,14 +47,13 @@ Annai/
 │   │   └── index.tsx     # Mounts FloatingWidget on Notion pages
 │   └── background.ts     # Background service worker (Notion API proxy)
 ├── components/           # React UI components
-│   ├── ui/              # Base UI components (button, input, utils)
-│   ├── chat/            # Chat system (AssistantProvider, useChat, types)
+│   ├── ui/              # Base UI components (button, input)
+│   ├── chat/            # Chat system (useChat, types)
 │   └── FloatingWidget.tsx # Floating chat widget for Notion pages
 ├── lib/                  # Utilities and configurations
 │   ├── utils.ts         # cn() helper (clsx + tailwind-merge)
 │   ├── notion-tools.ts  # Notion API tool definitions for LLM
-│   ├── content-setup.ts # Content script setup
-│   └── background-setup.ts # Background script setup
+│   └── content-setup.ts # Content script setup
 ├── public/              # Static assets (icons)
 ├── wxt.config.ts        # WXT configuration with React module
 └── tailwind.config.cjs  # Tailwind with shadcn/ui design system
@@ -67,14 +66,6 @@ Annai/
 1. **Popup** (`entrypoints/popup/`): Extension icon click popup
 2. **Content Script** (`entrypoints/content/`): Injects FloatingWidget into Notion pages
 3. **Background** (`entrypoints/background.ts`): Service worker handling Notion API proxy
-
-### TypeScript Path Aliases
-
-```typescript
-~/*          → ./entrypoints/*
-@/components/* → ./components/*
-@/lib/*      → ./lib/*
-```
 
 ### Notion API Integration
 
