@@ -4,7 +4,12 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: {
-    host_permissions: ['*://*.notion.so/*', '*://notion.so/*', '*://api.notion.com/*'],
+    host_permissions: [
+      '*://*.notion.so/*',
+      '*://notion.so/*',
+      '*://api.notion.com/*',
+      'https://openrouter.ai/*',
+    ],
     web_accessible_resources: [
       {
         resources: ['/icon/*'],

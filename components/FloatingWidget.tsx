@@ -1,13 +1,26 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { browser } from 'wxt/browser';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { useChat, type Message } from '@/components/chat/useChat';
+import { useChat } from '@/components/chat/useChat';
 
 interface WidgetProps {
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   initialState?: 'expanded' | 'collapsed';
 }
+
+type WidgetView = 'chat' | 'settings';
+
+type HealthStatus = {
+  openrouter: { ok: boolean; status: number; error?: string };
+  notion: { ok: boolean; status: number; error?: string };
+};
+
+type SettingsDraft = {
+  openrouterApiKey: string;
+  notionApiKey: string;
+};
 
 export default function FloatingWidget({ position = 'bottom-right', initialState = 'collapsed' }: WidgetProps) {
   const [isExpanded, setIsExpanded] = useState(initialState === 'expanded');
@@ -19,6 +32,14 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
   const [annaiIcon, setAnnaiIcon] = useState('');
   const [isComposing, setIsComposing] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+  const [view, setView] = useState<WidgetView>('chat');
+  const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>({
+    openrouterApiKey: '',
+    notionApiKey: '',
+  });
+  const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
+  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const { messages, sendMessage, isLoading } = useChat();
   const widgetRef = useRef<HTMLDivElement>(null);
@@ -26,10 +47,22 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
 
   // Load Annai icon
   useEffect(() => {
-    if (typeof browser !== 'undefined') {
-      setAnnaiIcon(browser.runtime.getURL('/icon/Annai.png'));
-    }
+    setAnnaiIcon(browser.runtime.getURL('/icon/Annai.png'));
   }, []);
+
+  useEffect(() => {
+    if (view !== 'settings') return;
+
+    const loadSettings = async () => {
+      const stored = await browser.storage.local.get(['openrouter_api_key', 'notion_api_key']);
+      setSettingsDraft({
+        openrouterApiKey: (stored.openrouter_api_key as string | undefined) ?? '',
+        notionApiKey: (stored.notion_api_key as string | undefined) ?? '',
+      });
+    };
+
+    loadSettings();
+  }, [view]);
 
   // Auto-scroll to bottom when new messages appear
   useEffect(() => {
@@ -89,9 +122,53 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      if (isComposing) return;
       handleSendMessage();
     }
   };
+
+  const maskKey = (value: string) => {
+    if (!value) return 'missing';
+    const trimmed = value.trim();
+    if (!trimmed) return 'empty';
+    const last4 = trimmed.slice(-4);
+    return `len:${trimmed.length} last4:${last4}`;
+  };
+
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    setIsCheckingHealth(true);
+
+    try {
+      console.log('[health-check][widget] save settings', {
+        openrouter: maskKey(settingsDraft.openrouterApiKey),
+        notion: maskKey(settingsDraft.notionApiKey),
+      });
+
+      await browser.storage.local.set({
+        openrouter_api_key: settingsDraft.openrouterApiKey,
+        notion_api_key: settingsDraft.notionApiKey,
+      });
+
+      const result = await browser.runtime.sendMessage({ type: 'RUN_HEALTH_CHECK' });
+      console.log('[health-check][widget] result', result);
+      setHealthStatus(result as HealthStatus);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save settings';
+      console.log('[health-check][widget] error', errorMessage);
+      setHealthStatus({
+        openrouter: { ok: false, status: 0, error: errorMessage },
+        notion: { ok: false, status: 0, error: errorMessage },
+      });
+    } finally {
+      setIsSavingSettings(false);
+      setIsCheckingHealth(false);
+    }
+  };
+
+  const stopEventPropagation = useCallback((e: React.SyntheticEvent) => {
+    e.stopPropagation();
+  }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -104,6 +181,44 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
     });
     setIsDragging(true);
   };
+
+  const renderHealthStatus = (label: string, status: HealthStatus['openrouter'] | null) => {
+    const isOk = status?.ok;
+    const statusText = isCheckingHealth
+      ? 'Checking...'
+      : status
+        ? status.ok
+          ? `OK (${status.status})`
+          : `Failed (${status.status || 'n/a'})`
+        : 'Not checked';
+
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-gray-400">{label}</span>
+          <span
+            className={cn(
+              'text-[11px]',
+              status
+                ? isOk
+                  ? 'text-emerald-400'
+                  : 'text-rose-400'
+                : 'text-gray-500'
+            )}
+          >
+            {statusText}
+          </span>
+        </div>
+        {status?.error && !status.ok && (
+          <p className="text-[11px] text-gray-500 break-words">{status.error}</p>
+        )}
+      </div>
+    );
+  };
+
+  const visibleMessages = messages.filter(
+    (message) => message.role !== 'tool' && message.role !== 'system'
+  );
 
   return (
     <div
@@ -119,6 +234,11 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
         top: isExpanded && (positionState.x !== 0 || positionState.y !== 0) ? `${positionState.y}px` : undefined,
       }}
       onMouseDown={handleMouseDown}
+      onKeyDown={stopEventPropagation}
+      onKeyUp={stopEventPropagation}
+      onPaste={stopEventPropagation}
+      onCopy={stopEventPropagation}
+      onCut={stopEventPropagation}
     >
       {/* Collapsed FAB */}
       {!isExpanded && (
@@ -180,6 +300,51 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
             </div>
 
             <div className="flex items-center gap-2">
+              {view === 'chat' ? (
+                <button
+                  onClick={() => setView('settings')}
+                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-800 transition-colors"
+                  title="Settings"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-gray-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M11.983 2.25c.53 0 1.048.05 1.553.145l.288 1.246a2.25 2.25 0 002.284 1.747l1.28-.08a9.02 9.02 0 011.146 1.984l-.86.965a2.25 2.25 0 000 2.748l.86.965a9.02 9.02 0 01-1.146 1.984l-1.28-.08a2.25 2.25 0 00-2.284 1.747l-.288 1.246a9.14 9.14 0 01-3.106 0l-.288-1.246a2.25 2.25 0 00-2.284-1.747l-1.28.08a9.02 9.02 0 01-1.146-1.984l.86-.965a2.25 2.25 0 000-2.748l-.86-.965a9.02 9.02 0 011.146-1.984l1.28.08a2.25 2.25 0 002.284-1.747l.288-1.246a9.14 9.14 0 011.553-.145z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setView('chat')}
+                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-800 transition-colors"
+                  title="Back to chat"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-gray-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+
               {/* Minimize Button */}
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
@@ -209,9 +374,9 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
           </div>
 
           {/* Messages Area */}
-          {!isMinimized && (
+          {!isMinimized && view === 'chat' && (
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900/50">
-              {messages.length === 0 ? (
+              {visibleMessages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -230,59 +395,102 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
                   <p className="text-sm">Start a conversation...</p>
                 </div>
               ) : (
-                messages.map((message) => (
+                visibleMessages.map((message) => (
                   <div
                     key={message.id}
-                    className={cn('flex gap-3', message.role === 'user' ? 'justify-end' : 'justify-start')}
+                    className={cn('flex flex-col gap-2', message.role === 'user' ? 'items-end' : 'items-start')}
                   >
-                    {message.role !== 'user' && (
-                      <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 text-gray-300"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                          />
-                        </svg>
-                      </div>
-                    )}
-
                     <div
-                      className={cn(
-                        'max-w-[75%] px-4 py-2 rounded-2xl',
-                        message.role === 'user'
-                          ? 'bg-gray-700 text-gray-100'
-                          : 'bg-gray-800 text-gray-100 border border-gray-700'
-                      )}
+                      className={cn('flex gap-3', message.role === 'user' ? 'justify-end' : 'justify-start')}
                     >
-                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                      {message.role !== 'user' && (
+                        <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 text-gray-300"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                            />
+                          </svg>
+                        </div>
+                      )}
+
+                      <div
+                        className={cn(
+                          'max-w-[75%] px-4 py-2 rounded-2xl',
+                          message.role === 'user'
+                            ? 'bg-gray-700 text-gray-100'
+                            : 'bg-gray-800 text-gray-100 border border-gray-700'
+                        )}
+                      >
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {message.content?.trim()
+                            ? message.content
+                            : message.isThinking
+                              ? 'Thinking...'
+                              : message.toolCalls?.length
+                                ? 'Running tools...'
+                                : ''}
+                        </p>
+                      </div>
+
+                      {message.role === 'user' && (
+                        <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 text-gray-300"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                          </svg>
+                        </div>
+                      )}
                     </div>
 
-                    {message.role === 'user' && (
-                      <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 text-gray-300"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                          />
-                        </svg>
+                    {message.role !== 'user' && message.toolCalls?.length ? (
+                      <div className="w-full max-w-[320px] space-y-2">
+                        {message.toolCalls.map((tool, index) => (
+                          <div
+                            key={`${tool.id}-${index}`}
+                            className="rounded-lg border border-gray-800 bg-gray-950/70 p-2 text-xs"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-indigo-300">{tool.name}</span>
+                              <span className="text-gray-400">
+                                {tool.result ? 'Completed' : 'Running'}
+                              </span>
+                            </div>
+                            <div className="mt-1 font-mono text-gray-400 truncate">
+                              args: {JSON.stringify(tool.args)}
+                            </div>
+                            {tool.result !== undefined && (
+                              <details className="mt-2">
+                                <summary className="cursor-pointer text-gray-500 hover:text-gray-300">
+                                  Show result
+                                </summary>
+                                <pre className="mt-2 max-h-32 overflow-x-auto rounded bg-gray-900 p-2 text-[11px] text-emerald-200">
+                                  {JSON.stringify(tool.result, null, 2)}
+                                </pre>
+                              </details>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 ))
               )}
@@ -290,8 +498,64 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
             </div>
           )}
 
+          {!isMinimized && view === 'settings' && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-gray-900/50">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-200">Settings</h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Store API keys locally to enable OpenRouter + Notion tool calls.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-300">OpenRouter API Key</label>
+                  <Input
+                    value={settingsDraft.openrouterApiKey}
+                    onChange={(e) =>
+                      setSettingsDraft((prev) => ({
+                        ...prev,
+                        openrouterApiKey: e.target.value,
+                      }))
+                    }
+                    placeholder="sk-or-..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-300">Notion API Key</label>
+                  <Input
+                    value={settingsDraft.notionApiKey}
+                    onChange={(e) =>
+                      setSettingsDraft((prev) => ({
+                        ...prev,
+                        notionApiKey: e.target.value,
+                      }))
+                    }
+                    placeholder="secret_..."
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Button
+                  onClick={handleSaveSettings}
+                  disabled={isSavingSettings || isCheckingHealth}
+                  className="w-full"
+                >
+                  {isSavingSettings || isCheckingHealth ? 'Saving...' : 'Save & Run Health Check'}
+                </Button>
+
+                <div className="rounded-xl border border-gray-800 bg-gray-950/60 p-3 space-y-2">
+                  {renderHealthStatus('OpenRouter', healthStatus?.openrouter ?? null)}
+                  {renderHealthStatus('Notion', healthStatus?.notion ?? null)}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Input Area */}
-          {!isMinimized && (
+          {!isMinimized && view === 'chat' && (
             <div className="p-4 border-t border-gray-800 bg-zinc-950">
               <div className="flex gap-2">
                 <Input

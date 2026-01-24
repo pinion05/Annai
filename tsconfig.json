@@ -10,5 +10,6 @@
       "@/components/*": ["./components/*"],
       "@/lib/*": ["./lib/*"]
     }
-  }
+  },
+  "exclude": ["tool call example"]
 }
