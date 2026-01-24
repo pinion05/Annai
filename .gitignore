@@ -77,3 +77,6 @@ bun.lockb
 
 # Test artifacts
 test-results/
+
+# Local worktrees
+.worktrees/
