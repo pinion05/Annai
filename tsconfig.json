@@ -4,12 +4,7 @@
     "ignoreDeprecations": "5.0",
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "baseUrl": ".",
-    "paths": {
-      "~/*": ["./entrypoints/*"],
-      "@/components/*": ["./components/*"],
-      "@/lib/*": ["./lib/*"]
-    }
+    "paths": {}
   },
   "exclude": ["tool call example"]
 }
