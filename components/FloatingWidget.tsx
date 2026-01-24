@@ -54,10 +54,14 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
     if (view !== 'settings') return;
 
     const loadSettings = async () => {
-      const stored = await browser.storage.local.get(['openrouter_api_key', 'notion_api_key']);
+      const [openrouterResult, notionResult] = await Promise.all([
+        browser.runtime.sendMessage({ type: 'GET_OPENROUTER_API_KEY' }),
+        browser.runtime.sendMessage({ type: 'GET_NOTION_API_KEY' }),
+      ]);
+
       setSettingsDraft({
-        openrouterApiKey: (stored.openrouter_api_key as string | undefined) ?? '',
-        notionApiKey: (stored.notion_api_key as string | undefined) ?? '',
+        openrouterApiKey: (openrouterResult?.apiKey as string | undefined) ?? '',
+        notionApiKey: (notionResult?.apiKey as string | undefined) ?? '',
       });
     };
 
@@ -145,10 +149,16 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
         notion: maskKey(settingsDraft.notionApiKey),
       });
 
-      await browser.storage.local.set({
-        openrouter_api_key: settingsDraft.openrouterApiKey,
-        notion_api_key: settingsDraft.notionApiKey,
-      });
+      await Promise.all([
+        browser.runtime.sendMessage({
+          type: 'SET_OPENROUTER_API_KEY',
+          apiKey: settingsDraft.openrouterApiKey,
+        }),
+        browser.runtime.sendMessage({
+          type: 'SET_NOTION_API_KEY',
+          apiKey: settingsDraft.notionApiKey,
+        }),
+      ]);
 
       const result = await browser.runtime.sendMessage({ type: 'RUN_HEALTH_CHECK' });
       console.log('[health-check][widget] result', result);

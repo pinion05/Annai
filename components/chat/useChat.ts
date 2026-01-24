@@ -230,8 +230,8 @@ export function useChat(options: UseChatOptions = {}) {
     updateMessages((prev) => [...prev, userMessage, assistantMessage]);
 
     try {
-      const stored = await browser.storage.local.get('openrouter_api_key');
-      const apiKey = stored.openrouter_api_key as string | undefined;
+      const stored = await browser.runtime.sendMessage({ type: 'GET_OPENROUTER_API_KEY' });
+      const apiKey = stored?.apiKey as string | undefined;
 
       if (!apiKey) {
         updateMessageById(activeAssistantId, (message) => ({
