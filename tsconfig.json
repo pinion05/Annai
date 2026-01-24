@@ -1,7 +1,10 @@
 {
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js"
-  }
+    "ignoreDeprecations": "5.0",
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "paths": {}
+  },
+  "exclude": ["tool call example"]
 }

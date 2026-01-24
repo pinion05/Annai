@@ -11,17 +11,38 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
-  filter: drop-shadow(0 0 2em #54bc4ae0);
+  filter: drop-shadow(0 0 2em #646cffaa);
 }
-.logo.solid:hover {
+
+.logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
 .card {
   padding: 2em;
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 0.75rem;
+}
+
+.card button {
+  background: #374151;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.card button:hover {
+  background: #4b5563;
 }
 
 .read-the-docs {
-  color: #888;
+  color: #6b7280;
 }
