@@ -6,6 +6,7 @@ import { cn } from '../../lib/utils';
 
 interface MarkdownRendererProps {
   content: string;
+  className?: string;
 }
 
 interface CodeBlockProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -190,10 +191,12 @@ const MARKDOWN_COMPONENTS: Components = {
   },
 };
 
-export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   return (
-    <ReactMarkdown components={MARKDOWN_COMPONENTS}>
-      {content}
-    </ReactMarkdown>
+    <div className={cn('break-words', className)}>
+      <ReactMarkdown components={MARKDOWN_COMPONENTS}>
+        {content}
+      </ReactMarkdown>
+    </div>
   );
 }
