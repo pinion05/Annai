@@ -12,7 +12,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   return (
     <ReactMarkdown
       components={{
-        h1: ({ className, ...props }: any) => (
+        h1: ({ className, ...props }: React.ComponentPropsWithoutRef<'h1'>) => (
           <h1
             className={cn(
               "scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-3xl mb-4",
@@ -21,7 +21,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
             {...props}
           />
         ),
-        h2: ({ className, ...props }: any) => (
+        h2: ({ className, ...props }: React.ComponentPropsWithoutRef<'h2'>) => (
           <h2
             className={cn(
               "scroll-m-20 border-b pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0 mb-3",
@@ -30,7 +30,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
             {...props}
           />
         ),
-        h3: ({ className, ...props }: any) => (
+        h3: ({ className, ...props }: React.ComponentPropsWithoutRef<'h3'>) => (
           <h3
             className={cn(
               "scroll-m-20 text-lg font-semibold tracking-tight mb-2",
@@ -39,25 +39,25 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
             {...props}
           />
         ),
-        p: ({ className, ...props }: any) => (
+        p: ({ className, ...props }: React.ComponentPropsWithoutRef<'p'>) => (
           <p
             className={cn("leading-7 [&:not(:first-child)]:mt-4", className)}
             {...props}
           />
         ),
-        ul: ({ className, ...props }: any) => (
+        ul: ({ className, ...props }: React.ComponentPropsWithoutRef<'ul'>) => (
           <ul
             className={cn("my-4 ml-6 list-disc [&>li]:mt-2", className)}
             {...props}
           />
         ),
-        ol: ({ className, ...props }: any) => (
+        ol: ({ className, ...props }: React.ComponentPropsWithoutRef<'ol'>) => (
           <ol
             className={cn("my-4 ml-6 list-decimal [&>li]:mt-2", className)}
             {...props}
           />
         ),
-        a: ({ className, ...props }: any) => (
+        a: ({ className, ...props }: React.ComponentPropsWithoutRef<'a'>) => (
           <a
             className={cn(
               "font-medium text-primary underline underline-offset-4",
@@ -66,13 +66,13 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
             {...props}
           />
         ),
-        blockquote: ({ className, ...props }: any) => (
+        blockquote: ({ className, ...props }: React.ComponentPropsWithoutRef<'blockquote'>) => (
           <blockquote
             className={cn("mt-6 border-l-2 pl-6 italic", className)}
             {...props}
           />
         ),
-        code: ({ node, inline, className, children, ...props }: any) => {
+        code: ({ node, inline, className, children, ...props }: React.ComponentPropsWithoutRef<'code'> & { inline?: boolean; node?: unknown }) => {
           const match = /language-(\w+)/.exec(className || '');
           const language = match ? match[1] : '';
 
@@ -105,12 +105,12 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   );
 }
 
-interface CodeBlockProps {
-  language: string;
+interface CodeBlockProps extends React.HTMLAttributes<HTMLDivElement> {
+  language?: string;
   value: string;
 }
 
-function CodeBlock({ language, value }: CodeBlockProps) {
+function CodeBlock({ language, value, className, ...props }: CodeBlockProps) {
   const [isCopied, setIsCopied] = useState(false);
 
   const copyToClipboard = async () => {
@@ -125,7 +125,13 @@ function CodeBlock({ language, value }: CodeBlockProps) {
   };
 
   return (
-    <div className="rounded-md overflow-hidden my-4 border border-gray-700 bg-[#1e1e1e]">
+    <div
+      className={cn(
+        "rounded-md overflow-hidden my-4 border border-gray-700 bg-[#1e1e1e]",
+        className
+      )}
+      {...props}
+    >
       <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] text-gray-200 border-b border-gray-700">
         <span className="text-xs font-mono font-medium text-gray-300">
           {language || 'text'}
