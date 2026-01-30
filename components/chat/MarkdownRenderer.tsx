@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { cn } from '../../lib/utils';
@@ -194,7 +195,7 @@ const MARKDOWN_COMPONENTS: Components = {
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   return (
     <div className={cn('break-words', className)}>
-      <ReactMarkdown components={MARKDOWN_COMPONENTS}>
+      <ReactMarkdown components={MARKDOWN_COMPONENTS} remarkPlugins={[remarkBreaks]}>
         {content}
       </ReactMarkdown>
     </div>
