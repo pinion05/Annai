@@ -1,5 +1,5 @@
 # Annai
-Annai - Alt Native Notion Ai
+Annai - Alt Native Notion AI
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/pinion05/Annai)
 <br/>
