@@ -20,6 +20,17 @@ type OpenRouterMessage = {
   name?: string;
 };
 
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+const SESSION_STORAGE_KEY = 'annai_sessions';
+const ACTIVE_SESSION_ID_KEY = 'annai_active_session_id';
+
 const SYSTEM_PROMPT = `You are Annai, a Notion assistant embedded in the user's workspace.
 
 Tool usage rules:
@@ -177,16 +188,94 @@ const streamChatCompletion = async ({
   return { content: assistantContent, toolCalls, finishReason };
 };
 
+// Session management utilities
+const getSessionTitle = (messages: Message[]): string => {
+  const userMessages = messages.filter(m => m.role === 'user');
+  if (userMessages.length === 0) return 'New Chat';
+
+  const firstMessage = userMessages[0].content.trim();
+  const maxLength = 50;
+  return firstMessage.length > maxLength
+    ? firstMessage.substring(0, maxLength) + '...'
+    : firstMessage;
+};
+
+const saveSessions = async (sessions: ChatSession[]) => {
+  await browser.storage.local.set({ [SESSION_STORAGE_KEY]: sessions });
+};
+
+const loadSessions = async (): Promise<ChatSession[]> => {
+  const result = await browser.storage.local.get(SESSION_STORAGE_KEY);
+  return result[SESSION_STORAGE_KEY] || [];
+};
+
+const saveActiveSessionId = async (sessionId: string | null) => {
+  if (sessionId) {
+    await browser.storage.local.set({ [ACTIVE_SESSION_ID_KEY]: sessionId });
+  } else {
+    await browser.storage.local.remove(ACTIVE_SESSION_ID_KEY);
+  }
+};
+
+const loadActiveSessionId = async (): Promise<string | null> => {
+  const result = await browser.storage.local.get(ACTIVE_SESSION_ID_KEY);
+  return result[ACTIVE_SESSION_ID_KEY] || null;
+};
+
 export function useChat(options: UseChatOptions = {}) {
   const { apiUrl = 'https://openrouter.ai/api/v1/chat/completions', model = DEFAULT_MODEL } = options;
   const [messages, setMessages] = useState<Message[]>([]);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesRef = useRef<Message[]>([]);
 
+  // Load sessions on mount
+  useEffect(() => {
+    const load = async () => {
+      const loadedSessions = await loadSessions();
+      setSessions(loadedSessions);
+
+      const loadedActiveSessionId = await loadActiveSessionId();
+      if (loadedActiveSessionId) {
+        const activeSession = loadedSessions.find(s => s.id === loadedActiveSessionId);
+        if (activeSession) {
+          setActiveSessionId(activeSession.id);
+          setMessages(activeSession.messages);
+          messagesRef.current = activeSession.messages;
+        }
+      }
+    };
+    load();
+  }, []);
+
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  // Save current session when messages change
+  useEffect(() => {
+    const saveCurrentSession = async () => {
+      if (!activeSessionId) return;
+
+      const sessionIndex = sessions.findIndex(s => s.id === activeSessionId);
+      if (sessionIndex === -1) return;
+
+      const updatedSessions = [...sessions];
+      updatedSessions[sessionIndex] = {
+        ...updatedSessions[sessionIndex],
+        messages,
+        title: getSessionTitle(messages),
+        updatedAt: Date.now(),
+      };
+
+      setSessions(updatedSessions);
+      await saveSessions(updatedSessions);
+    };
+
+    saveCurrentSession();
+  }, [messages, activeSessionId, sessions]);
 
   const updateMessages = useCallback((updater: (prev: Message[]) => Message[]) => {
     setMessages((prev) => {
@@ -384,11 +473,68 @@ export function useChat(options: UseChatOptions = {}) {
     abortControllerRef.current?.abort();
   }, []);
 
+  const startNewChat = useCallback(async () => {
+    const newSession: ChatSession = {
+      id: crypto.randomUUID(),
+      title: 'New Chat',
+      messages: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const updatedSessions = [...sessions, newSession];
+    setSessions(updatedSessions);
+    await saveSessions(updatedSessions);
+
+    setActiveSessionId(newSession.id);
+    setMessages([]);
+    messagesRef.current = [];
+
+    await saveActiveSessionId(newSession.id);
+  }, [sessions]);
+
+  const loadSession = useCallback(async (sessionId: string) => {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return;
+
+    setActiveSessionId(sessionId);
+    setMessages(session.messages);
+    messagesRef.current = session.messages;
+
+    await saveActiveSessionId(sessionId);
+  }, [sessions]);
+
+  const deleteSession = useCallback(async (sessionId: string) => {
+    const updatedSessions = sessions.filter(s => s.id !== sessionId);
+    setSessions(updatedSessions);
+    await saveSessions(updatedSessions);
+
+    if (activeSessionId === sessionId) {
+      if (updatedSessions.length > 0) {
+        const nextSession = updatedSessions[0];
+        setActiveSessionId(nextSession.id);
+        setMessages(nextSession.messages);
+        messagesRef.current = nextSession.messages;
+        await saveActiveSessionId(nextSession.id);
+      } else {
+        setActiveSessionId(null);
+        setMessages([]);
+        messagesRef.current = [];
+        await saveActiveSessionId(null);
+      }
+    }
+  }, [sessions, activeSessionId]);
+
   return {
     messages,
+    sessions,
+    activeSessionId,
     sendMessage,
     isLoading,
     stopGenerating,
     clearMessages,
+    startNewChat,
+    loadSession,
+    deleteSession,
   };
 }

@@ -4,13 +4,14 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { cn } from '../lib/utils';
 import { useChat } from './chat/useChat';
+import type { ChatSession } from './chat/useChat';
 
 interface WidgetProps {
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   initialState?: 'expanded' | 'collapsed';
 }
 
-type WidgetView = 'chat' | 'settings';
+type WidgetView = 'chat' | 'settings' | 'sessions';
 
 type HealthStatus = {
   openrouter: { ok: boolean; status: number; error?: string };
@@ -41,7 +42,7 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
-  const { messages, sendMessage, isLoading } = useChat();
+  const { messages, sessions, activeSessionId, sendMessage, isLoading, startNewChat, loadSession, deleteSession } = useChat();
   const widgetRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -310,6 +311,29 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
             </div>
 
             <div className="flex items-center gap-2">
+              {view === 'chat' && (
+                <button
+                  onClick={() => setView('sessions')}
+                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-800 transition-colors"
+                  title="Chat Sessions"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-gray-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+                </button>
+              )}
+
               {view === 'chat' ? (
                 <button
                   onClick={() => setView('settings')}
@@ -505,6 +529,100 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
                 ))
               )}
               <div ref={messagesEndRef} />
+            </div>
+          )}
+
+          {!isMinimized && view === 'sessions' && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900/50">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-200">Chat Sessions</h3>
+                <Button
+                  onClick={() => {
+                    startNewChat();
+                    setView('chat');
+                  }}
+                  className="text-xs px-3 py-1"
+                  size="sm"
+                >
+                  + New Chat
+                </Button>
+              </div>
+
+              {sessions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-10 w-10 mb-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+                  <p className="text-sm">No sessions yet</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {sessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className={cn(
+                        'rounded-lg border p-3 cursor-pointer transition-colors',
+                        activeSessionId === session.id
+                          ? 'bg-gray-800 border-indigo-600'
+                          : 'bg-gray-950/60 border-gray-800 hover:bg-gray-800'
+                      )}
+                    >
+                      <div
+                        className="flex items-start justify-between gap-2"
+                        onClick={() => {
+                          loadSession(session.id);
+                          setView('chat');
+                        }}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-200 truncate">
+                            {session.title}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(session.updatedAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Delete this session?')) {
+                              deleteSession(session.id);
+                            }
+                          }}
+                          className="flex-shrink-0 p-1 rounded hover:bg-red-900/30 text-gray-400 hover:text-red-400 transition-colors"
+                          title="Delete session"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
