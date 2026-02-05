@@ -471,6 +471,23 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
                       )}
                     </div>
 
+                    {message.role !== 'user' && message.toolCalls?.length ? (
+                      <div className="w-full max-w-[320px] space-y-2">
+                        {message.toolCalls.map((tool, index) => (
+                          <div
+                            key={`${tool.id}-${index}`}
+                            className="rounded-lg border border-gray-800 bg-gray-950/70 p-2 text-xs"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-indigo-300">{tool.name}</span>
+                              <span className="text-gray-400">
+                                {tool.result ? 'Completed' : 'Running'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 ))
               )}
