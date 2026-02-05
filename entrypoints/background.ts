@@ -15,6 +15,8 @@ export default defineBackground(() => {
       message.type === 'GET_NOTION_API_KEY' ||
       message.type === 'SET_OPENROUTER_API_KEY' ||
       message.type === 'GET_OPENROUTER_API_KEY' ||
+      message.type === 'SET_SELECTED_MODEL' ||
+      message.type === 'GET_SELECTED_MODEL' ||
       message.type === 'RUN_HEALTH_CHECK' ||
       message.type === 'SET_NOTION_DATABASE_ID' ||
       message.type.startsWith('NOTION_');
@@ -48,6 +50,22 @@ export default defineBackground(() => {
     if (message.type === 'GET_OPENROUTER_API_KEY') {
       browser.storage.local.get('openrouter_api_key').then((result) => {
         sendResponse({ apiKey: result.openrouter_api_key });
+      });
+      return true;
+    }
+
+    if (message.type === 'GET_SELECTED_MODEL') {
+      browser.storage.local.get('selectedModel').then((result) => {
+        sendResponse({
+          model: result.selectedModel || 'nvidia/nemotron-3-nano-30b-a3b:free',
+        });
+      });
+      return true;
+    }
+
+    if (message.type === 'SET_SELECTED_MODEL') {
+      browser.storage.local.set({ selectedModel: message.model }).then(() => {
+        sendResponse({ success: true });
       });
       return true;
     }
