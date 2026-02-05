@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { browser } from 'wxt/browser';
 import { notionToolDefinitions, notionTools } from '../../lib/notion-tools';
+import { DEFAULT_MODEL } from '../../lib/constants';
 import type { Message, ToolCall } from './types';
 
 export interface UseChatOptions {
@@ -28,8 +29,6 @@ Tool usage rules:
 - Use retrieve_page for metadata, get_page_content for block text.
 - Use update_page_properties for metadata changes and append_block_to_page for content.
 - Chain tools step-by-step and verify results when unsure.`;
-
-const DEFAULT_MODEL = 'nvidia/nemotron-3-nano-30b-a3b:free';
 
 const parseToolArgs = (raw: string) => {
   if (!raw) return {};
@@ -181,8 +180,19 @@ export function useChat(options: UseChatOptions = {}) {
   const { apiUrl = 'https://openrouter.ai/api/v1/chat/completions', model = DEFAULT_MODEL } = options;
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_MODEL);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesRef = useRef<Message[]>([]);
+
+  useEffect(() => {
+    const loadModel = async () => {
+      const result = await browser.runtime.sendMessage({ type: 'GET_SELECTED_MODEL' });
+      if (result?.model) {
+        setSelectedModel(result.model as string);
+      }
+    };
+    loadModel();
+  }, []);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -258,7 +268,7 @@ export function useChat(options: UseChatOptions = {}) {
         const { content: assistantContent, toolCalls } = await streamChatCompletion({
           apiUrl,
           apiKey,
-          model,
+          model: selectedModel,
           messages: conversation,
           signal: abortControllerRef.current.signal,
           onContent: (partial) => {
@@ -374,7 +384,7 @@ export function useChat(options: UseChatOptions = {}) {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [apiUrl, model, isLoading, updateMessages, updateMessageById, appendMessages]);
+  }, [apiUrl, selectedModel, isLoading, updateMessages, updateMessageById, appendMessages]);
 
   const clearMessages = useCallback(() => {
     updateMessages(() => []);
