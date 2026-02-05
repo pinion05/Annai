@@ -14,11 +14,3 @@ export interface Message {
   name?: string;
   isThinking?: boolean;
 }
-
-export interface ChatSession {
-  id: string;
-  title: string;
-  messages: Message[];
-  createdAt: number;
-  updatedAt: number;
-}
