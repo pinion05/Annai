@@ -484,19 +484,6 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
                                 {tool.result ? 'Completed' : 'Running'}
                               </span>
                             </div>
-                            <div className="mt-1 font-mono text-gray-400 truncate">
-                              args: {JSON.stringify(tool.args)}
-                            </div>
-                            {tool.result !== undefined && (
-                              <details className="mt-2">
-                                <summary className="cursor-pointer text-gray-500 hover:text-gray-300">
-                                  Show result
-                                </summary>
-                                <pre className="mt-2 max-h-32 overflow-x-auto rounded bg-gray-900 p-2 text-[11px] text-emerald-200">
-                                  {JSON.stringify(tool.result, null, 2)}
-                                </pre>
-                              </details>
-                            )}
                           </div>
                         ))}
                       </div>
