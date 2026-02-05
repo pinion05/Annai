@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { DEFAULT_MODEL } from '../lib/constants';
 
 export default defineBackground(() => {
   const NOTION_API_BASE = 'https://api.notion.com/v1';
@@ -15,6 +16,8 @@ export default defineBackground(() => {
       message.type === 'GET_NOTION_API_KEY' ||
       message.type === 'SET_OPENROUTER_API_KEY' ||
       message.type === 'GET_OPENROUTER_API_KEY' ||
+      message.type === 'SET_SELECTED_MODEL' ||
+      message.type === 'GET_SELECTED_MODEL' ||
       message.type === 'RUN_HEALTH_CHECK' ||
       message.type === 'SET_NOTION_DATABASE_ID' ||
       message.type.startsWith('NOTION_');
@@ -49,6 +52,40 @@ export default defineBackground(() => {
       browser.storage.local.get('openrouter_api_key').then((result) => {
         sendResponse({ apiKey: result.openrouter_api_key });
       });
+      return true;
+    }
+
+    if (message.type === 'GET_SELECTED_MODEL') {
+      browser.storage.local
+        .get('selectedModel')
+        .then((result) => {
+          sendResponse({
+            model: result.selectedModel || DEFAULT_MODEL,
+          });
+        })
+        .catch((error) => {
+          sendResponse({
+            error: error instanceof Error ? error.message : 'Failed to get model',
+          });
+        });
+      return true;
+    }
+
+    if (message.type === 'SET_SELECTED_MODEL') {
+      if (!message.model || typeof message.model !== 'string' || !message.model.trim()) {
+        sendResponse({ error: 'Invalid model identifier' });
+        return true;
+      }
+      browser.storage.local
+        .set({ selectedModel: message.model })
+        .then(() => {
+          sendResponse({ success: true });
+        })
+        .catch((error) => {
+          sendResponse({
+            error: error instanceof Error ? error.message : 'Failed to set model',
+          });
+        });
       return true;
     }
 

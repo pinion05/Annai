@@ -4,6 +4,8 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { cn } from '../lib/utils';
 import { useChat } from './chat/useChat';
+import ModelSelector from './ModelSelector';
+import { DEFAULT_MODEL } from '../lib/constants';
 
 interface WidgetProps {
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
@@ -20,6 +22,7 @@ type HealthStatus = {
 type SettingsDraft = {
   openrouterApiKey: string;
   notionApiKey: string;
+  model: string;
 };
 
 export default function FloatingWidget({ position = 'bottom-right', initialState = 'collapsed' }: WidgetProps) {
@@ -36,6 +39,7 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>({
     openrouterApiKey: '',
     notionApiKey: '',
+    model: DEFAULT_MODEL,
   });
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
@@ -54,14 +58,16 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
     if (view !== 'settings') return;
 
     const loadSettings = async () => {
-      const [openrouterResult, notionResult] = await Promise.all([
+      const [openrouterResult, notionResult, modelResult] = await Promise.all([
         browser.runtime.sendMessage({ type: 'GET_OPENROUTER_API_KEY' }),
         browser.runtime.sendMessage({ type: 'GET_NOTION_API_KEY' }),
+        browser.runtime.sendMessage({ type: 'GET_SELECTED_MODEL' }),
       ]);
 
       setSettingsDraft({
         openrouterApiKey: (openrouterResult?.apiKey as string | undefined) ?? '',
         notionApiKey: (notionResult?.apiKey as string | undefined) ?? '',
+        model: (modelResult?.model as string | undefined) ?? DEFAULT_MODEL,
       });
     };
 
@@ -157,6 +163,10 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
         browser.runtime.sendMessage({
           type: 'SET_NOTION_API_KEY',
           apiKey: settingsDraft.notionApiKey,
+        }),
+        browser.runtime.sendMessage({
+          type: 'SET_SELECTED_MODEL',
+          model: settingsDraft.model,
         }),
       ]);
 
@@ -543,6 +553,18 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
                       }))
                     }
                     placeholder="secret_..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <ModelSelector
+                    value={settingsDraft.model}
+                    onChange={(model) =>
+                      setSettingsDraft((prev) => ({
+                        ...prev,
+                        model,
+                      }))
+                    }
                   />
                 </div>
               </div>
