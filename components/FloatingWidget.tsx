@@ -226,9 +226,15 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
     );
   };
 
-  const visibleMessages = messages.filter(
-    (message) => message.role !== 'tool' && message.role !== 'system'
-  );
+  const visibleMessages = messages.filter((message) => {
+    if (message.role === 'tool' || message.role === 'system') return false;
+
+    if (message.role === 'assistant' && !message.content?.trim() && !message.isThinking) {
+      return false;
+    }
+
+    return true;
+  });
 
   return (
     <div
@@ -445,9 +451,7 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
                             ? message.content
                             : message.isThinking
                               ? 'Thinking...'
-                              : message.toolCalls?.length
-                                ? 'Running tools...'
-                                : ''}
+                              : ''}
                         </p>
                       </div>
 
@@ -471,36 +475,7 @@ export default function FloatingWidget({ position = 'bottom-right', initialState
                       )}
                     </div>
 
-                    {message.role !== 'user' && message.toolCalls?.length ? (
-                      <div className="w-full max-w-[320px] space-y-2">
-                        {message.toolCalls.map((tool, index) => (
-                          <div
-                            key={`${tool.id}-${index}`}
-                            className="rounded-lg border border-gray-800 bg-gray-950/70 p-2 text-xs"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-mono text-indigo-300">{tool.name}</span>
-                              <span className="text-gray-400">
-                                {tool.result ? 'Completed' : 'Running'}
-                              </span>
-                            </div>
-                            <div className="mt-1 font-mono text-gray-400 truncate">
-                              args: {JSON.stringify(tool.args)}
-                            </div>
-                            {tool.result !== undefined && (
-                              <details className="mt-2">
-                                <summary className="cursor-pointer text-gray-500 hover:text-gray-300">
-                                  Show result
-                                </summary>
-                                <pre className="mt-2 max-h-32 overflow-x-auto rounded bg-gray-900 p-2 text-[11px] text-emerald-200">
-                                  {JSON.stringify(tool.result, null, 2)}
-                                </pre>
-                              </details>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : null}
+                    {/* Tool call metadata intentionally hidden from user UI */}
                   </div>
                 ))
               )}

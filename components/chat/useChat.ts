@@ -40,6 +40,28 @@ const parseToolArgs = (raw: string) => {
   }
 };
 
+const sanitizeAssistantContent = (content: string, options: { trim?: boolean } = {}) => {
+  const { trim = true } = options;
+
+  if (!content) return '';
+
+  const cleaned = content
+    .replace(/<tool_call>[\s\S]*?<\/tool_call>/gi, '')
+    .replace(/<tool_response>[\s\S]*?<\/tool_response>/gi, '')
+    .replace(/<function_call>[\s\S]*?<\/function_call>/gi, '')
+    .replace(/<tool_result>[\s\S]*?<\/tool_result>/gi, '')
+    .replace(/```(?:json)?\s*\{\s*"tool_calls"[\s\S]*?}\s*```/gi, '')
+    .replace(/^\s*(tool_calls?|tool_call_id|function_call)\s*:.*$/gim, '')
+    .replace(/<tool_call>[\s\S]*$/i, '')
+    .replace(/<tool_response>[\s\S]*$/i, '')
+    .replace(/<function_call>[\s\S]*$/i, '')
+    .replace(/<tool_result>[\s\S]*$/i, '')
+    .replace(/```(?:json)?\s*\{\s*"tool_calls"[\s\S]*$/gi, '')
+    .replace(/\n{3,}/g, '\n\n');
+
+  return trim ? cleaned.trim() : cleaned;
+};
+
 const toApiMessages = (messages: Message[]): OpenRouterMessage[] => {
   return messages.map((message) => {
     if (message.role === 'assistant') {
@@ -264,7 +286,7 @@ export function useChat(options: UseChatOptions = {}) {
           onContent: (partial) => {
             updateMessageById(activeAssistantId, (message) => ({
               ...message,
-              content: partial,
+              content: sanitizeAssistantContent(partial, { trim: false }),
               isThinking: false,
             }));
           },
@@ -272,7 +294,7 @@ export function useChat(options: UseChatOptions = {}) {
 
         updateMessageById(activeAssistantId, (message) => ({
           ...message,
-          content: assistantContent,
+          content: sanitizeAssistantContent(assistantContent),
           toolCalls: toolCalls.length ? toolCalls : message.toolCalls,
           isThinking: false,
         }));
