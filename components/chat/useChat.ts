@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { browser } from 'wxt/browser';
 import { notionToolDefinitions, notionTools } from '../../lib/notion-tools';
+import { sanitizeAssistantContent } from './sanitizeAssistantContent';
 import type { Message, ToolCall } from './types';
 
 export interface UseChatOptions {
@@ -264,7 +265,7 @@ export function useChat(options: UseChatOptions = {}) {
           onContent: (partial) => {
             updateMessageById(activeAssistantId, (message) => ({
               ...message,
-              content: partial,
+              content: sanitizeAssistantContent(partial, { trim: false }),
               isThinking: false,
             }));
           },
@@ -272,7 +273,7 @@ export function useChat(options: UseChatOptions = {}) {
 
         updateMessageById(activeAssistantId, (message) => ({
           ...message,
-          content: assistantContent,
+          content: sanitizeAssistantContent(assistantContent),
           toolCalls: toolCalls.length ? toolCalls : message.toolCalls,
           isThinking: false,
         }));
